@@ -122,7 +122,7 @@ let products = [];
 window.addEventListener('load', async() => { loadProducts(); });
 
 async function loadProducts() {
-  const res = await fetch('http://localhost:3001/products/category/electronic');
+  const res = await fetch('http://localhost:3000/products/category/electronic');
   const data = await res.json();
   products = data.products || [];
   displayProducts(products);
@@ -132,7 +132,7 @@ function displayProducts(items) {
   const grid = document.getElementById('productsGrid');
   grid.innerHTML = items.map(p => `
     <div class="product-card">
-      <img src="http://localhost:3001/uploads/${p.image}" alt="${p.name}">
+      <img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}">
       <h3>${p.name}</h3>
       <p>${p.description}</p>
       <div class="product-price">₹${p.price}/${p.rentUnit || 'day'}</div>

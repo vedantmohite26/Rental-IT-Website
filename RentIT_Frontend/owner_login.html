@@ -48,7 +48,7 @@ document.getElementById("ownerLoginForm").addEventListener("submit", async funct
   const errorMsg = document.getElementById("errorMsg");
 
   try {
-    const res = await fetch("http://localhost:3001/owner-login", {
+    const res = await fetch("http://localhost:3000/owner-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })

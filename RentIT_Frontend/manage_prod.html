@@ -63,15 +63,15 @@ window.addEventListener('load', async () => {
 
 async function loadProducts(owner_id){
   try{
-    const res = await fetch(`http://localhost:3001/owner-products/${owner_id}`);
+    const res = await fetch(`http://localhost:3000/owner-products/${owner_id}`);
     const data = await res.json();
     const container = document.getElementById('productContainer');
     container.innerHTML = '';
     if(data.products.length===0){ container.innerHTML='<p style="text-align:center;">No products listed yet.</p>'; return; }
 
     data.products.forEach(prod=>{
-      const imageSrc = prod.image ? `http://localhost:3001/uploads/${prod.image}` : '';
-      const billLink = prod.invoice ? `http://localhost:3001/uploads/${prod.invoice}` : null;
+      const imageSrc = prod.image ? `http://localhost:3000/uploads/${prod.image}` : '';
+      const billLink = prod.invoice ? `http://localhost:3000/uploads/${prod.invoice}` : null;
 
       const card = document.createElement('div');
       card.className = 'product-card';
@@ -107,7 +107,7 @@ async function loadProducts(owner_id){
         const formData = new FormData(editForm);
         formData.append('owner_id', owner_id);
         try{
-          const res = await fetch(`http://localhost:3001/update-product/${prod.product_id}`,{
+          const res = await fetch(`http://localhost:3000/update-product/${prod.product_id}`,{
             method:'PUT',
             body: formData
           });
@@ -135,7 +135,7 @@ function logout(){
 async function deleteProduct(id){
   if(!confirm('Are you sure you want to delete this product?')) return;
   try{
-    const res = await fetch(`http://localhost:3001/delete-product/${id}`,{method:'DELETE'});
+    const res = await fetch(`http://localhost:3000/delete-product/${id}`,{method:'DELETE'});
     const result = await res.json();
     if(res.ok){ alert(result.message); window.location.reload(); } 
     else alert(result.message || 'Error deleting product.');

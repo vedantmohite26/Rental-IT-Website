@@ -98,7 +98,7 @@ document.getElementById('paymentForm').addEventListener('submit', async function
   }
 
   // ✅ Create Razorpay Order (Amount in paise)
-  const response = await fetch("http://localhost:3001/create-order", {
+  const response = await fetch("http://localhost:3000/create-order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ amount: Math.round(totalAmount * 100) })
@@ -115,7 +115,7 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     "order_id": orderData.id,
     "handler": async function (response) {
 
-      await fetch("http://localhost:3001/save-order", {
+      await fetch("http://localhost:3000/save-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

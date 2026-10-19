@@ -214,7 +214,7 @@ document.getElementById('listForm').addEventListener('submit', async function(e)
   formData.append("invoice", billFile);
 
   try {
-    const res = await fetch("http://localhost:3001/add-product", { method:"POST", body: formData });
+    const res = await fetch("http://localhost:3000/add-product", { method:"POST", body: formData });
     const result = await res.json();
     if(res.ok){
       alert("Product listed successfully!");

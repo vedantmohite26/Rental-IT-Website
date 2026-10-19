@@ -127,7 +127,7 @@
 
   async function loadAddresses() {
     try {
-      const res = await fetch(`http://localhost:3001/addresses/${user.user_id}`);
+      const res = await fetch(`http://localhost:3000/addresses/${user.user_id}`);
       const data = await res.json();
 
       const grid = document.getElementById('addressGrid');
@@ -188,14 +188,14 @@
 
     try {
       if (editingAddressId) {
-        await fetch(`http://localhost:3001/addresses/${editingAddressId}`, {
+        await fetch(`http://localhost:3000/addresses/${editingAddressId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(obj)
         });
         showMessage("Address updated successfully!", "success");
       } else {
-        await fetch("http://localhost:3001/addresses", {
+        await fetch("http://localhost:3000/addresses", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(obj)
@@ -224,7 +224,7 @@
   async function deleteAddress(id) {
     if (confirm("Delete this address?")) {
       try {
-        await fetch(`http://localhost:3001/addresses/${id}`, { method: "DELETE" });
+        await fetch(`http://localhost:3000/addresses/${id}`, { method: "DELETE" });
         showMessage("Address deleted successfully!", "success");
         loadAddresses();
       } catch {

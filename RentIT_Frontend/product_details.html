@@ -52,13 +52,13 @@ async function loadProductDetails() {
     return;
   }
 
-  const res = await fetch(`http://localhost:3001/products/${productId}`);
+  const res = await fetch(`http://localhost:3000/products/${productId}`);
   const data = await res.json();
   product = data.product;
 
   document.getElementById('productContainer').innerHTML = `
     <div class="product-image">
-      <img src="http://localhost:3001/uploads/${product.image}" alt="${product.name}" onerror="this.src='image/dslr.jpg'">
+      <img src="http://localhost:3000/uploads/${product.image}" alt="${product.name}" onerror="this.src='image/dslr.jpg'">
     </div>
     <div class="product-details">
       <h2>${product.name}</h2>

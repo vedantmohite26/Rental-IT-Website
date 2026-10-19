@@ -121,7 +121,7 @@ window.addEventListener('load', async () => { await loadProducts(); });
 
 async function loadProducts() {
   try {
-    const res = await fetch('http://localhost:3001/products/category/cameras');
+    const res = await fetch('http://localhost:3000/products/category/cameras');
     const data = await res.json();
     products = data.products || [];
     displayProducts(products);
@@ -139,7 +139,7 @@ function displayProducts(items) {
   }
   grid.innerHTML = items.map(p => `
     <div class="product-card">
-      <img src="http://localhost:3001/uploads/${p.image}" alt="${p.name}" onerror="this.src='image/dslr.jpg'">
+      <img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}" onerror="this.src='image/dslr.jpg'">
       <h3>${p.name}</h3>
       <p>${p.description}</p>
       <div class="product-price">₹${p.price}/${p.rentUnit || 'day'}</div>
