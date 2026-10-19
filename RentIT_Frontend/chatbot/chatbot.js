@@ -1,3 +1,4 @@
+
 /* =====================================================
    RENTAI CHATBOT
    Connected to RentIT Backend
@@ -9,6 +10,9 @@
     if (document.getElementById("rentai-button")) {
         return;
     }
+
+    const API_URL = "http://localhost:3000/api/chat";
+    const IMAGE_BASE_URL = "http://localhost:3000/uploads/";
 
 
     /* -------------------------------------------------
@@ -60,7 +64,6 @@
 
         </div>
 
-
         <div id="rentai-messages">
 
             <div class="rentai-message bot">
@@ -82,7 +85,6 @@
             </div>
 
         </div>
-
 
         <div class="rentai-input-area">
 
@@ -176,23 +178,20 @@
         message.className =
             "rentai-message " + sender;
 
-
         const bubble =
             document.createElement("div");
 
         bubble.className =
             "rentai-bubble";
 
+        // Safely display text and preserve new lines
+        bubble.textContent = text || "";
 
-        // Convert new lines to <br>
-        bubble.innerHTML =
-            text.replace(/\n/g, "<br>");
-
+        bubble.style.whiteSpace = "pre-wrap";
 
         message.appendChild(bubble);
 
         messages.appendChild(message);
-
 
         // Scroll to latest message
         messages.scrollTop =
@@ -202,15 +201,44 @@
 
 
     /* -------------------------------------------------
-       ADD PRODUCT CARDS
+       GET PRODUCT IMAGE URL
+       ------------------------------------------------- */
+
+    function getProductImageUrl(imageValue) {
+
+        if (
+            !imageValue ||
+            typeof imageValue !== "string"
+        ) {
+            return "";
+        }
+
+        // Supports filenames and stored paths
+        const filename =
+            imageValue.split(/[\\/]/).pop();
+
+        if (!filename) {
+            return "";
+        }
+
+        return IMAGE_BASE_URL +
+            encodeURIComponent(filename);
+
+    }
+
+
+    /* -------------------------------------------------
+       ADD PRODUCT CARDS WITH IMAGES
        ------------------------------------------------- */
 
     function addProductCards(products) {
 
-        if (!products || products.length === 0) {
+        if (
+            !Array.isArray(products) ||
+            products.length === 0
+        ) {
             return;
         }
-
 
         products.forEach(function (product) {
 
@@ -221,39 +249,77 @@
                 "chat-product-card";
 
 
-            productCard.innerHTML = `
+            /* -----------------------------------------
+               PRODUCT IMAGE
+            ----------------------------------------- */
 
-                <div class="chat-product-name">
+            const imageUrl =
+                getProductImageUrl(product.image);
 
-                    ${product.name || "Unnamed Product"}
+            if (imageUrl) {
 
-                </div>
+                const image =
+                    document.createElement("img");
+
+                image.className =
+                    "chat-product-image";
+
+                image.alt =
+                    product.name || "Rental product";
+
+                image.loading = "lazy";
+
+                image.src = imageUrl;
+
+                image.onerror = function () {
+                    image.style.display = "none";
+                };
+
+                productCard.appendChild(image);
+
+            }
 
 
-                <div class="chat-product-category">
+            /* -----------------------------------------
+               PRODUCT NAME
+            ----------------------------------------- */
 
-                    ${product.category || "Other"}
+            const name =
+                document.createElement("div");
 
-                </div>
+            name.className =
+                "chat-product-name";
 
-
-                <div class="chat-product-price">
-
-                    ₹${product.price ?? 0}
-
-                </div>
+            name.textContent =
+                product.name || "Unnamed Product";
 
 
-                <button
-                    class="chat-view-product"
-                    data-product-id="${product.product_id}"
-                >
+            /* -----------------------------------------
+               PRODUCT CATEGORY
+            ----------------------------------------- */
 
-                    View Product
+            const category =
+                document.createElement("div");
 
-                </button>
+            category.className =
+                "chat-product-category";
 
-            `;
+            category.textContent =
+                product.category || "Other";
+
+
+            /* -----------------------------------------
+               PRODUCT PRICE
+            ----------------------------------------- */
+
+            const price =
+                document.createElement("div");
+
+            price.className =
+                "chat-product-price";
+
+            price.textContent =
+                `₹${product.price ?? 0}`;
 
 
             /* -----------------------------------------
@@ -261,9 +327,16 @@
             ----------------------------------------- */
 
             const viewButton =
-                productCard.querySelector(
-                    ".chat-view-product"
-                );
+                document.createElement("button");
+
+            viewButton.className =
+                "chat-view-product";
+
+            viewButton.textContent =
+                "View Product";
+
+            viewButton.dataset.productId =
+                product.product_id ?? "";
 
 
             viewButton.addEventListener(
@@ -271,41 +344,49 @@
                 function () {
 
                     const productId =
-                        this.dataset.productId;
+                        product.product_id;
 
+                    if (productId == null) {
+                        console.error(
+                            "Product ID is missing."
+                        );
+                        return;
+                    }
 
                     console.log(
                         "Opening product:",
                         productId
                     );
 
-
                     /*
-                     * IMPORTANT:
-                     *
-                     * product_details.html is in the
-                     * same folder as index.html.
-                     *
-                     * Therefore we use:
-                     *
-                     * product_details.html?id=...
-                     *
-                     * NOT:
-                     *
-                     * ../product_details.html
+                     * product_details.html is assumed
+                     * to be in the same folder as the
+                     * page loading this chatbot.
                      */
 
                     window.location.href =
-                        `product_details.html?id=${productId}`;
+                        `product_details.html?id=${
+                            encodeURIComponent(productId)
+                        }`;
 
                 }
             );
 
 
+            /* -----------------------------------------
+               ADD ELEMENTS TO CARD
+            ----------------------------------------- */
+
+            productCard.append(
+                name,
+                category,
+                price,
+                viewButton
+            );
+
             messages.appendChild(productCard);
 
         });
-
 
         messages.scrollTop =
             messages.scrollHeight;
@@ -328,7 +409,6 @@
         typing.id =
             "rentai-typing";
 
-
         typing.innerHTML = `
 
             <div class="rentai-bubble">
@@ -344,7 +424,6 @@
             </div>
 
         `;
-
 
         messages.appendChild(typing);
 
@@ -363,7 +442,6 @@
         const typing =
             document.getElementById("rentai-typing");
 
-
         if (typing) {
             typing.remove();
         }
@@ -380,59 +458,44 @@
         const message =
             input.value.trim();
 
-
         // Don't send empty messages
         if (!message) {
             return;
         }
 
-
         // Display user message
-        addMessage(
-            message,
-            "user"
-        );
-
+        addMessage(message, "user");
 
         // Clear input
         input.value = "";
 
-
         // Disable send button
         sendButton.disabled = true;
 
-
-        // Show typing
+        // Show typing indicator
         showTyping();
-
 
         try {
 
             const response =
-                await fetch(
-                    "http://localhost:3000/api/chat",
-                    {
+                await fetch(API_URL, {
 
-                        method: "POST",
+                    method: "POST",
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-                        body: JSON.stringify({
-                            message: message
-                        })
+                    body: JSON.stringify({
+                        message: message
+                    })
 
-                    }
-                );
-
+                });
 
             const data =
                 await response.json();
 
-
-            // Remove typing
+            // Remove typing indicator
             removeTyping();
 
 
@@ -450,12 +513,10 @@
                     "bot"
                 );
 
-
                 console.error(
                     "RentAI API error:",
                     data
                 );
-
 
                 return;
 
@@ -467,23 +528,21 @@
             ----------------------------------------- */
 
             addMessage(
-                data.reply,
+                data.reply || "How else can I help you?",
                 "bot"
             );
 
 
             /* -----------------------------------------
-               DISPLAY PRODUCTS
+               DISPLAY PRODUCT CARDS
             ----------------------------------------- */
 
             if (
-                data.products &&
+                Array.isArray(data.products) &&
                 data.products.length > 0
             ) {
 
-                addProductCards(
-                    data.products
-                );
+                addProductCards(data.products);
 
             }
 
@@ -494,9 +553,7 @@
                 error
             );
 
-
             removeTyping();
-
 
             addMessage(
                 "Sorry, I couldn't connect to the RentIT AI server. Please make sure the RentIT backend is running.",
@@ -543,6 +600,5 @@
 
         }
     );
-
 
 })();
