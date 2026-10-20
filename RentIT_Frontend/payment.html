@@ -51,9 +51,39 @@ button{border:none;padding:12px 25px;border-radius:5px;font-size:1rem;font-weigh
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
+const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+let cartStorageKey = null;
+
 // ✅ Show Total Amount
-document.addEventListener("DOMContentLoaded", () => {
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+document.addEventListener("DOMContentLoaded", async () => {
+  let sessionResponse;
+  try {
+    sessionResponse = await fetch(`${API_BASE_URL}/user-session`, {
+      credentials: "include"
+    });
+  } catch (error) {
+    console.error("Payment session check failed:", error);
+    alert("Could not verify your login. Please try again.");
+    return;
+  }
+
+  if (sessionResponse.status === 401) {
+    window.location.href = "login.html?returnTo=cart.html";
+    return;
+  }
+
+  if (!sessionResponse.ok) {
+    alert("Could not verify your login. Please try again.");
+    return;
+  }
+
+  const { user } = await sessionResponse.json();
+  cartStorageKey = `rentitCart_${user.user_id}`;
+  let cart = JSON.parse(localStorage.getItem(cartStorageKey)) || [];
+  if (cart.length === 0) {
+    window.location.href = "cart.html";
+    return;
+  }
 
   let totalRent = 0;
   let totalDeposit = 0;
@@ -76,15 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById('paymentForm').addEventListener('submit', async function(e) {
   e.preventDefault();
 
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
-  let user = JSON.parse(localStorage.getItem("rentitCurrentUser"));
+  let cart = JSON.parse(localStorage.getItem(cartStorageKey)) || [];
   let totalAmount = parseFloat(localStorage.getItem("totalAmount")) || 0;
-
-  if(!user){
-    alert("Please login first!");
-    window.location.href = "login.html";
-    return;
-  }
 
   if(cart.length === 0){
     alert("Your cart is empty!");
@@ -98,8 +121,9 @@ document.getElementById('paymentForm').addEventListener('submit', async function
   }
 
   // ✅ Create Razorpay Order (Amount in paise)
-  const response = await fetch("http://localhost:3000/create-order", {
+  const response = await fetch(`${API_BASE_URL}/create-order`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ amount: Math.round(totalAmount * 100) })
   });
@@ -115,11 +139,11 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     "order_id": orderData.id,
     "handler": async function (response) {
 
-      await fetch("http://localhost:3000/save-order", {
+      await fetch(`${API_BASE_URL}/save-order`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: user.user_id,
           items: cart,
           address: document.getElementById("address").value,
           total_amount: totalAmount,
@@ -127,7 +151,7 @@ document.getElementById('paymentForm').addEventListener('submit', async function
         })
       });
 
-      localStorage.removeItem("cart");
+      localStorage.removeItem(cartStorageKey);
       window.location.href = "thankyou.html";
     },
     "theme": { "color": "#ff6600" }

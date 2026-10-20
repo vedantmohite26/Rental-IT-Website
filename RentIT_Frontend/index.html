@@ -533,22 +533,75 @@
 
 
 <script>
-  // Check login status on page load
-window.addEventListener('load', function() {
-  const loggedInUser = localStorage.getItem('rentitLoggedIn');
-  const currentUser = JSON.parse(localStorage.getItem('rentitCurrentUser') || '{}');
-  
-  if (loggedInUser && currentUser.firstName) {
-    document.getElementById('accountGreeting').textContent = `Hello, ${currentUser.firstName}`;
+  const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+
+  function updateCartCount(userId) {
+    const cartCount = document.querySelector('.cart-count');
+    if (!userId) {
+      cartCount.textContent = '0';
+      return;
+    }
+
+    try {
+      const cart = JSON.parse(localStorage.getItem(`rentitCart_${userId}`) || '[]');
+      cartCount.textContent = Array.isArray(cart) ? cart.length : '0';
+    } catch (error) {
+      console.error('Could not read cart contents:', error);
+      cartCount.textContent = '0';
+    }
+  }
+
+  // The server session is authoritative; local storage is only a compatibility cache.
+window.addEventListener('load', async function() {
+  const greeting = document.getElementById('accountGreeting');
+  greeting.textContent = 'Checking sign-in...';
+  updateCartCount();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/user-session`, {
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      localStorage.removeItem('rentitLoggedIn');
+      localStorage.removeItem('rentitCurrentUser');
+      greeting.textContent = 'Hello, Sign in';
+      updateCartCount();
+      return;
+    }
+
+    const data = await response.json();
+    localStorage.setItem('rentitLoggedIn', 'true');
+    localStorage.setItem('rentitCurrentUser', JSON.stringify(data.user));
+    updateCartCount(data.user.user_id);
+    const firstName = data.user.name.split(' ')[0];
+    greeting.textContent = `Hello, ${firstName}`;
     document.getElementById('loginButton').textContent = 'Account';
     document.getElementById('loginButton').onclick = function() { window.location.href = 'youraccount.html'; };
+  } catch (error) {
+    console.error('Could not verify user session:', error);
+    greeting.textContent = 'Sign-in status unavailable';
+    updateCartCount();
   }
 });
 
-  function logout() {
+  async function logout() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/user-logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Could not end your session');
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('Could not log you out. Please try again.');
+      return;
+    }
+
     localStorage.removeItem('rentitLoggedIn');
     localStorage.removeItem('rentitCurrentUser');
-    alert('You have been logged out.');
     window.location.reload();
   }
 
@@ -583,14 +636,6 @@ window.addEventListener('load', function() {
       performSearch();
     }
   });
-
-  // Update Cart Count in Header
-function updateCartCount() {
-  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  document.querySelector(".cart-count").textContent = cart.length;
-}
-updateCartCount();
-
 
  </script>
 <script src="chatbot/chatbot.js"></script>

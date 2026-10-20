@@ -162,25 +162,40 @@
   <div id="ordersGrid"></div>
 
   <script>
+    const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+
     window.addEventListener('load', loadOrders);
 
-    function loadOrders() {
-      const currentUser = JSON.parse(localStorage.getItem("rentitCurrentUser"));
+    async function loadOrders() {
+      try {
+        const sessionResponse = await fetch(`${API_BASE_URL}/user-session`, {
+          credentials: "include"
+        });
+        if (sessionResponse.status === 401) {
+          document.getElementById("ordersGrid").innerHTML = `
+            <div class="no-orders">
+              <h3>Please Login to View Orders</h3>
+              <button onclick="window.location.href='login.html?returnTo=orders.html'">Login</button>
+            </div>`;
+          document.getElementById("ordersInfo").innerText = "";
+          return;
+        }
+        if (!sessionResponse.ok) {
+          throw new Error("Could not verify your login.");
+        }
 
-      if (!currentUser || !currentUser.user_id) {
-        document.getElementById("ordersGrid").innerHTML = `
-          <div class="no-orders">
-            <h3>Please Login to View Orders</h3>
-            <button onclick="window.location.href='login.html'">Login</button>
-          </div>`;
-        document.getElementById("ordersInfo").innerText = "";
-        return;
+        const { user } = await sessionResponse.json();
+        const response = await fetch(`${API_BASE_URL}/orders/${user.user_id}`, {
+          credentials: "include"
+        });
+        if (!response.ok) {
+          throw new Error("Could not load your orders.");
+        }
+        displayOrders(await response.json());
+      } catch (error) {
+        console.error("Order loading failed:", error);
+        document.getElementById("ordersInfo").innerText = "Unable to load your orders. Please refresh and try again.";
       }
-
-      fetch(`http://localhost:3000/orders/${currentUser.user_id}`)
-        .then(res => res.json())
-        .then(orders => displayOrders(orders))
-        .catch(err => console.error(err));
     }
 
     function displayOrders(orders) {

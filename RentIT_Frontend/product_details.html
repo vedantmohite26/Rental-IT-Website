@@ -41,6 +41,7 @@
 <a href="javascript:history.back()" class="back">← Go Back</a>
 
 <script>
+const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
 let product = null;
 
 async function loadProductDetails() {
@@ -52,13 +53,21 @@ async function loadProductDetails() {
     return;
   }
 
-  const res = await fetch(`http://localhost:3000/products/${productId}`);
-  const data = await res.json();
-  product = data.product;
+  try {
+    const res = await fetch(`${API_BASE_URL}/products/${productId}`);
+    const data = await res.json();
+    if (!res.ok || !data.product) {
+      throw new Error(data.message || 'Product could not be loaded');
+    }
+    product = data.product;
+  } catch (error) {
+    document.getElementById('productContainer').textContent = error.message;
+    return;
+  }
 
   document.getElementById('productContainer').innerHTML = `
     <div class="product-image">
-      <img src="http://localhost:3000/uploads/${product.image}" alt="${product.name}" onerror="this.src='image/dslr.jpg'">
+      <img src="${API_BASE_URL}/uploads/${product.image}" alt="${product.name}" onerror="this.src='image/dslr.jpg'">
     </div>
     <div class="product-details">
       <h2>${product.name}</h2>
@@ -81,30 +90,50 @@ async function loadProductDetails() {
   document.getElementById("rentButton").addEventListener("click", addToCart);
 }
 
-function addToCart() {
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+async function addToCart() {
+  try {
+    const sessionRes = await fetch(`${API_BASE_URL}/user-session`, {
+      credentials: 'include'
+    });
 
-  const exists = cart.find(item => item.product_id === product.product_id);
-  if (exists) return alert("This product is already in your cart.");
+    if (sessionRes.status === 401) {
+      const returnTo = `${window.location.pathname}${window.location.search}`;
+      window.location.href = `login.html?returnTo=${encodeURIComponent(returnTo)}`;
+      return;
+    }
 
-  let duration = parseInt(document.getElementById("rentalDuration").value);
-  if (!duration || duration < 1) duration = 1;
+    if (!sessionRes.ok) {
+      throw new Error('Could not verify your login. Please try again.');
+    }
 
-  cart.push({
-    product_id: product.product_id,
-    owner_id: product.owner_id,
-    name: product.name,
-    category: product.category,
-    price: product.price,
-    rentUnit: product.rentUnit,
-    image: product.image,
-    deposit: product.deposit,
-    duration: duration
-  });
+    const sessionData = await sessionRes.json();
+    const cartKey = `rentitCart_${sessionData.user.user_id}`;
+    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
 
-  localStorage.setItem("cart", JSON.stringify(cart));
-  alert("✅ Added to cart!");
-  window.location.href = "cart.html";
+    const exists = cart.find(item => item.product_id === product.product_id);
+    if (exists) return alert("This product is already in your cart.");
+
+    let duration = parseInt(document.getElementById("rentalDuration").value);
+    if (!duration || duration < 1) duration = 1;
+
+    cart.push({
+      product_id: product.product_id,
+      owner_id: product.owner_id,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      rentUnit: product.rentUnit,
+      image: product.image,
+      deposit: product.deposit,
+      duration: duration
+    });
+
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    alert("✅ Added to cart!");
+    window.location.href = "cart.html";
+  } catch (error) {
+    alert(error.message || 'Could not verify your login. Please try again.');
+  }
 }
 
 loadProductDetails();

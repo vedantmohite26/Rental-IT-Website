@@ -4,70 +4,230 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login - RentIT</title>
-  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f9f9f9;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
+      padding: 20px;
     }
     .login-box {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 350px;
+      background: #ffffff;
+      padding: 36px 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e2e8f0;
+      width: 100%;
+      max-width: 380px;
       text-align: center;
+    }
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 14px;
+    }
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    p.subtitle {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 22px;
+    }
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
     }
     input {
       width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    input:focus {
+      border-color: #0f172a;
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
     }
     button {
-      background: orange;
-      color: black;
-      padding: 10px 20px;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 11px 20px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
       width: 100%;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: background 0.2s ease;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     button:hover {
-      background: #ff9900;
+      background: #1e293b;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .alert {
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      display: none;
+      text-align: left;
+    }
+    .alert-danger {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .alert-success {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+    .back-link {
+      margin-top: 20px;
+      font-size: 0.825rem;
+    }
+    .back-link a {
+      color: #64748b;
+      text-decoration: none;
+    }
+    .back-link a:hover {
+      text-decoration: underline;
+      color: #0f172a;
     }
   </style>
 </head>
 <body>
   <div class="login-box">
-    <h2>Admin Login</h2>
-    <input type="text" id="username" placeholder="Enter username">
-    <input type="password" id="password" placeholder="Enter password">
-    <button onclick="adminLogin()">Login</button>
-    <p id="msg" style="color:red;margin-top:10px;"></p>
+    <div class="brand-icon">
+      <i class="fa-solid fa-screwdriver-wrench"></i>
+    </div>
+    <h2>Admin Portal</h2>
+
+
+
+    <div id="alertBox" class="alert alert-danger"></div>
+
+    <form id="adminLoginForm" onsubmit="adminLogin(event)" novalidate>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="e.g. admin" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter password" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" id="loginBtn">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+      </button>
+    </form>
+
+    <div class="back-link">
+      <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Back to Storefront</a>
+    </div>
   </div>
 
   <script>
-    async function adminLogin() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+    // Dynamically match frontend hostname (127.0.0.1 or localhost) so session cookies are correctly sent
+    const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
 
-      const res = await fetch('http://localhost:3000/admin/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ username, password })
-      });
-      const data = await res.json();
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('error') === 'session_expired') {
+        showAlert('Your admin session expired or was invalid. Please sign in again.');
+      }
+    });
 
-      if (data.success) {
-        window.location.href = 'admin_dash.html';
-      } else {
-        document.getElementById('msg').innerText = data.message || 'Invalid login';
+    function showAlert(msg, isError = true) {
+      const box = document.getElementById('alertBox');
+      box.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
+      box.style.display = 'block';
+      box.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${msg}`;
+    }
+
+    async function adminLogin(e) {
+      if (e) e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const loginBtn = document.getElementById('loginBtn');
+
+      if (!username || !password) {
+        showAlert('Please enter both username and password.');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/login`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showAlert('Login successful! Redirecting...', false);
+          sessionStorage.setItem('rentitAdminAuth', 'true');
+          setTimeout(() => {
+            window.location.href = 'admin_dash.html';
+          }, 350);
+        } else {
+          showAlert(data.message || 'Invalid username or password.');
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Login';
+        }
+      } catch (err) {
+        console.error('Admin login error:', err);
+        showAlert('Could not connect to the backend server. Make sure it is running on port 3001.');
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Login';
       }
     }
   </script>

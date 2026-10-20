@@ -3,110 +3,214 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Owner Registration - RentIT</title>
+  <title>Supplier Registration - RentIT</title>
+
+  <!-- FontAwesome & Unified Stylesheet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="supplier.css">
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8f9fa; color: #333; }
-    a { text-decoration: none; }
-    header { background-color: #222; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { margin: 0; font-size: 1.8rem; cursor: pointer; }
-    nav a { color: white; margin-left: 20px; }
-    .container { display: grid; place-items: center; min-height: 90vh; padding: 20px; }
-    .card { background: white; width: 100%; max-width: 600px; border-radius: 12px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-    h2 { border-left: 5px solid #ff6600; padding-left: 10px; font-size: 1.4rem; margin-bottom: 16px; }
-    .field { margin-bottom: 16px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
-    input:focus, textarea:focus { border-color: #ff6600; box-shadow: 0 0 0 3px rgba(255,102,0,0.15); }
-    .otp-inputs { display: flex; gap: 10px; margin: 10px 0; }
-    .otp-inputs input { width: 40px; height: 40px; text-align: center; font-size: 18px; }
-    .btn { width: 100%; padding: 12px; background: #ff6600; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 6px; }
-    .btn:hover { background: #e05500; }
-    footer { background: #222; color: white; text-align: center; padding: 15px; margin-top: 20px; }
+    .reg-canvas {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      background: radial-gradient(circle at top, rgba(13, 148, 136, 0.08) 0%, transparent 60%), var(--bg-canvas);
+    }
+    .reg-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 560px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-lg);
+      padding: 36px 32px;
+    }
   </style>
 </head>
-<body>
+<body style="background-color: var(--bg-canvas);">
 
-<header>
-  <h1 onclick="window.location.href='index.html'">RentIT</h1>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="contact.html">Contact</a>
-  </nav>
-</header>
+  <div class="reg-canvas">
 
-<main class="container">
-  <section class="card">
-    <h2>Owner Registration</h2>
-    <form id="ownerRegistrationForm">
-      <!-- Personal Details -->
-      <div class="field">
-        <label for="owner-name">Full Name</label>
-        <input type="text" id="owner-name" name="name" required>
-      </div>
-      <div class="field">
-        <label for="owner-email">Email</label>
-        <input type="email" id="owner-email" name="email" required>
-      </div>
-      <div class="field">
-        <label for="owner-phone">Phone Number</label>
-        <input type="tel" id="owner-phone" name="phone" required>
-      </div>
-      <div class="field">
-        <label for="owner-password">Password</label>
-        <input type="password" id="owner-password" name="password" required>
+    <!-- Brand Header -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="index.html" class="sup-brand" style="justify-content: center; margin-bottom: 8px;">
+        <div class="sup-brand-logo"><i class="fa-solid fa-cube"></i></div>
+        <span class="sup-brand-text">RentIT</span>
+      </a>
+      <span class="sup-badge sup-badge-teal">
+        <i class="fa-solid fa-store"></i> Supplier Onboarding
+      </span>
+    </div>
+
+    <!-- Registration Card -->
+    <div class="reg-card">
+      <div style="margin-bottom: 24px; text-align: center;">
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 6px; letter-spacing: -0.02em;">
+          Become a Verified Supplier
+        </h1>
+
       </div>
 
-      <div class="field">
-        <label for="photo">Upload Photo</label>
-        <input type="file" id="photo" name="profile_pic" accept=".jpg,.jpeg,.png">
+      <!-- Alert Box -->
+      <div id="alertBox" style="display: none; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 18px; font-size: 0.85rem; font-weight: 600;">
       </div>
 
-      <button type="submit" class="btn">Register</button>
-    </form>
-  </section>
-</main>
+      <form id="ownerRegistrationForm" novalidate>
 
-<footer>
-  <p>© 2025 RentIT. All rights reserved.</p>
-</footer>
+        <!-- Full Name -->
+        <div class="sup-form-group">
+          <label class="sup-form-label" for="owner-name">
+            Full Name <span class="required">*</span>
+          </label>
+          <input type="text" id="owner-name" class="sup-form-input" placeholder="e.g. Rakesh Patil" required>
+        </div>
 
-<script>
-const form = document.getElementById("ownerRegistrationForm");
-form.addEventListener("submit", async function(e){
-  e.preventDefault();
+        <!-- Email & Phone Grid -->
+        <div class="sup-grid-2">
+          <div class="sup-form-group">
+            <label class="sup-form-label" for="owner-email">
+              Email Address <span class="required">*</span>
+            </label>
+            <input type="email" id="owner-email" class="sup-form-input" placeholder="supplier@example.com" required>
+          </div>
 
-  const formData = new FormData();
-  formData.append("name", document.getElementById("owner-name").value.trim());
-  formData.append("email", document.getElementById("owner-email").value.trim());
-  formData.append("phone", document.getElementById("owner-phone").value.trim());
-  formData.append("password", document.getElementById("owner-password").value.trim());
+          <div class="sup-form-group">
+            <label class="sup-form-label" for="owner-phone">
+              Phone Number <span class="required">*</span>
+            </label>
+            <input type="tel" id="owner-phone" class="sup-form-input" placeholder="e.g. 9876543210" required>
+          </div>
+        </div>
 
-  const photoFile = document.getElementById("photo").files[0];
-  if (photoFile) {
-    formData.append("profile_pic", photoFile);
-  }
+        <!-- Password -->
+        <div class="sup-form-group">
+          <label class="sup-form-label" for="owner-password">
+            Account Password <span class="required">*</span>
+          </label>
+          <input type="password" id="owner-password" class="sup-form-input" placeholder="Create a strong password (min 6 characters)" required>
+        </div>
 
-  try {
-    const response = await fetch("http://localhost:3000/owner-signup", {
-      method: "POST",
-      body: formData
-    });
+        <!-- Profile Photo (Optional) -->
+        <div class="sup-form-group">
+          <label class="sup-form-label" for="photo">
+            Profile Photo <span style="font-weight: normal; color: var(--text-muted);">(Optional)</span>
+          </label>
+          <div class="sup-file-dropzone" onclick="document.getElementById('photo').click()" style="padding: 16px;">
+            <i class="fa-solid fa-camera sup-dropzone-icon" style="font-size: 1.4rem;"></i>
+            <p class="sup-dropzone-text" style="font-size: 0.85rem;">Click to select profile picture</p>
+            <p class="sup-dropzone-sub">Supports JPG or PNG</p>
+            <div id="photoFileName" class="sup-file-selected" style="display: none; margin-top: 8px;"></div>
+          </div>
+          <input type="file" id="photo" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handlePhotoChange(this)">
+        </div>
 
-    const result = await response.json();
+        <!-- Submit Button -->
+        <button type="submit" id="regSubmitBtn" class="sup-btn sup-btn-teal" style="width: 100%; padding: 12px; font-size: 0.95rem; margin-top: 10px;">
+          <i class="fa-solid fa-user-plus"></i> Complete Supplier Registration
+        </button>
 
-    if(response.ok){
-      alert("Registration Successful! Owner ID: " + result.owner_id);
-      window.location.href = "owner_login.html";
-    } else {
-      alert(result.message || "Error during registration");
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); text-align: center; font-size: 0.875rem; color: var(--text-muted);">
+        Already registered as a supplier?
+        <a href="owner_login.html" style="color: var(--teal-700); font-weight: 700; text-decoration: none; margin-left: 4px;">
+          Sign in here
+        </a>
+      </div>
+    </div>
+
+    <!-- Return to Storefront -->
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: none; font-weight: 600;">
+        <i class="fa-solid fa-arrow-left"></i> Return to customer marketplace
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3001`;
+
+    function handlePhotoChange(input) {
+      const file = input.files[0];
+      const nameBadge = document.getElementById('photoFileName');
+      if (file) {
+        nameBadge.style.display = 'inline-flex';
+        nameBadge.innerHTML = `<i class="fa-solid fa-check"></i> ${file.name}`;
+      } else {
+        nameBadge.style.display = 'none';
+      }
     }
 
-  } catch(err){
-    console.error(err);
-    alert("Server error! Please try again later.");
-  }
-});
-</script>
+    function showAlert(message, isError = true) {
+      const box = document.getElementById('alertBox');
+      box.style.display = 'block';
+      box.style.background = isError ? 'var(--danger-bg)' : 'var(--success-bg)';
+      box.style.color = isError ? 'var(--danger-text)' : 'var(--success-text)';
+      box.style.border = `1px solid ${isError ? 'var(--danger-border)' : 'var(--success-border)'}`;
+      box.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
+    }
+
+    document.getElementById("ownerRegistrationForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const name = document.getElementById("owner-name").value.trim();
+      const email = document.getElementById("owner-email").value.trim();
+      const phone = document.getElementById("owner-phone").value.trim();
+      const password = document.getElementById("owner-password").value.trim();
+      const photoFile = document.getElementById("photo").files[0];
+
+      if (!name || !email || !phone || !password) {
+        showAlert('Please fill in all required registration fields.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showAlert('Password must be at least 6 characters in length.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('regSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating Account...';
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("phone", phone);
+      formData.append("password", password);
+      if (photoFile) {
+        formData.append("profile_pic", photoFile);
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/owner-signup`, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showAlert(`Registration Successful! Welcome ${name}. Redirecting to sign in...`, false);
+          setTimeout(() => {
+            window.location.href = "owner_login.html";
+          }, 1200);
+        } else {
+          showAlert(result.message || "Error during supplier registration. Please try again.");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Complete Supplier Registration';
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert("Server connection error! Please make sure the backend server is running.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Complete Supplier Registration';
+      }
+    });
+  </script>
 
 </body>
 </html>

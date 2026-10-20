@@ -183,8 +183,12 @@ The backend automatically creates tables such as:
 ## Notes
 
 - The frontend is static and depends on API requests to the backend server.
-- The backend currently allows CORS from local frontend ports like `localhost:5500` and `127.0.0.1:5500`.
+- Owner login and dashboard API calls use the `rentit.sid` session cookie. Serve the frontend through Live Server on `localhost:5500` or `localhost:5501` (do not open the HTML file directly), and use `localhost` consistently for both frontend and backend.
+- Additional frontend origins can be allowed by setting `FRONTEND_ORIGINS` to a comma-separated list of exact origins, for example `https://rentit.example.com`. Credentialed CORS requests require an explicit allowed origin.
+- In production, set a strong `SESSION_SECRET` and use HTTPS so the session cookie can be sent securely.
 - Uploaded images and invoices are stored in `RentIT_Backend/uploads/`.
+
+The owner dashboard summary uses existing database data: current rentals are products with a `Paid` order whose rental dates include today, available products are the remaining products, and pending rental requests are orders with `Pending` status.
 
 ## Running the Project
 

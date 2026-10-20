@@ -113,8 +113,15 @@
 </footer>
 
 <script>
-function loadCart() {
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+let cartStorageKey = null;
+
+function getCart() {
+  return cartStorageKey ? JSON.parse(localStorage.getItem(cartStorageKey)) || [] : [];
+}
+
+function renderCart() {
+  let cart = getCart();
   const cartContainer = document.getElementById("cartItems");
   const totalPriceElement = document.getElementById("totalPrice");
 
@@ -130,21 +137,21 @@ function loadCart() {
   cartContainer.innerHTML = "";
 
   cart.forEach((item, index) => {
-    const days = item.days || 1;
+    const duration = item.duration || 1;
     const rentUnit = item.rentUnit || "day";
     const deposit = parseFloat(item.deposit) || 0;
 
-    const subtotal = item.price * days;
+    const subtotal = item.price * duration;
     totalRent += subtotal;
     totalDeposit += deposit;
 
     cartContainer.innerHTML += `
       <div class="cart-item">
-        <img src="http://localhost:3000/uploads/${item.image}" alt="${item.name}">
+        <img src="${API_BASE_URL}/uploads/${item.image}" alt="${item.name}">
         <div class="cart-details">
           <h4>${item.name}</h4>
           <p>Price: ₹${item.price} / ${rentUnit}</p>
-          <p>Duration: ${days} ${rentUnit}(s)</p>
+          <p>Duration: ${duration} ${rentUnit}(s)</p>
           <p>Subtotal Rent: <strong>₹${subtotal}</strong></p>
           <p>Deposit: <strong>₹${deposit}</strong></p>
         </div>
@@ -162,17 +169,48 @@ function loadCart() {
 }
 
 function removeItem(index) {
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  let cart = getCart();
   cart.splice(index, 1);
-  localStorage.setItem("cart", JSON.stringify(cart));
+  localStorage.setItem(cartStorageKey, JSON.stringify(cart));
   loadCart();
 }
 
 function proceedToPayment() {
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  let cart = getCart();
   if (cart.length === 0) return alert("Your cart is empty!");
 
   window.location.href = "payment.html";
+}
+
+async function loadCart() {
+  const cartContainer = document.getElementById("cartItems");
+  try {
+    const response = await fetch(`${API_BASE_URL}/user-session`, {
+      credentials: "include"
+    });
+
+    if (response.status === 401) {
+      cartContainer.innerHTML = `
+        <p style="text-align:center;color:#555;">
+          Please <a href="login.html?returnTo=cart.html">log in</a> to view your cart.
+        </p>`;
+      document.getElementById("totalPrice").textContent = "";
+      document.querySelector(".checkout-btn").style.display = "none";
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error("Could not verify your login.");
+    }
+
+    const { user } = await response.json();
+    cartStorageKey = `rentitCart_${user.user_id}`;
+    renderCart();
+  } catch (error) {
+    console.error("Cart session check failed:", error);
+    cartContainer.textContent = "Unable to verify your login. Please refresh and try again.";
+    document.querySelector(".checkout-btn").style.display = "none";
+  }
 }
 
 loadCart();

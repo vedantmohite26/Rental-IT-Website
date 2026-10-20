@@ -3,228 +3,379 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>List Product - RentIT</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      background: url('https://wallpaper-mania.com/wp-content/uploads/2018/09/High_resolution_wallpaper_background_ID_77700448280.jpg') no-repeat center center/cover;
-      min-height: 100vh;
-      color: white;
-      position: relative;
-    }
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.25);
-      z-index: -1;
-    }
-    header {
-      background-color: rgba(34,34,34,0.85);
-      padding: 10px 20px;
-      display: flex; justify-content: space-between; align-items: center;
-      position: sticky; top:0;
-    }
-    header h1 { cursor: pointer; }
-    main {
-      max-width: 700px;
-      margin: 80px auto;
-      background: rgba(255,255,255,0.1);
-      padding: 30px;
-      border-radius: 12px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-    }
-    h2 { text-align: center; margin-bottom: 30px; }
-    form { display: flex; flex-direction: column; gap: 20px; }
-    label { font-weight: bold; }
-    input, textarea, select {
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-      width: 100%;
-    }
-    .inline-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    button {
-      background: #ff6600;
-      border: none;
-      padding: 12px;
-      border-radius: 6px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    button:hover { background: #e65c00; }
-    footer {
-      background: rgba(34,34,34,0.85);
-      text-align: center;
-      padding: 20px;
-      margin-top: 40px;
-    }
-    .error-message {
-      color: #ffaaaa;
-      font-size: 0.9rem;
-      margin-top: -10px;
-    }
-  </style>
+  <title>List a New Product - RentIT Supplier</title>
+
+  <!-- FontAwesome & Unified Stylesheet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="supplier.css">
 </head>
 <body>
-<header>
-  <h1 onclick="window.location.href='index.html'">RentIT</h1>
-  <nav style="display:flex; gap:20px; align-items:center;">
-    <span id="ownerGreeting">Hello, Owner</span>
-    <a href="#" onclick="logout()" style="color:orange;text-decoration:none;">Sign Out</a>
-  </nav>
-</header>
 
-<main>
+  <!-- Top Navigation Header -->
+  <header class="sup-header">
+    <div class="sup-header-inner">
+      <a href="owner_dash.html" class="sup-brand">
+        <div class="sup-brand-logo"><i class="fa-solid fa-cube"></i></div>
+        <div>
+          <span class="sup-brand-text">RentIT</span>
+          <span class="sup-brand-badge">Supplier</span>
+        </div>
+      </a>
 
-  <!-- ✅ ADDED BACK BUTTON (NO LOGIC CHANGED) -->
-  <button onclick="window.location.href='owner_dash.html'"
-    style="background:rgba(255,255,255,0.15); border:none; padding:10px 16px; 
-    border-radius:6px; color:white; cursor:pointer; margin-bottom:15px;">
-    ⬅ Back
-  </button>
+      <button class="sup-mobile-toggle" id="supMobileToggle" aria-label="Toggle navigation menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
 
-  <h2>List a New Product</h2>
-  <form id="listForm" enctype="multipart/form-data">
-    <div>
-      <label for="productName">Product Name</label>
-      <input type="text" id="productName" required placeholder="e.g., DSLR Camera">
-      <p class="error-message" id="nameError"></p>
-    </div>
+      <nav class="sup-nav" id="supNav">
+        <a href="owner_dash.html" class="sup-nav-link" data-page="dashboard">
+          <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </a>
+        <a href="manage_prod.html" class="sup-nav-link" data-page="manage">
+          <i class="fa-solid fa-boxes-stacked"></i> Manage Products
+        </a>
+        <a href="list_product.html" class="sup-nav-link active" data-page="add">
+          <i class="fa-solid fa-circle-plus"></i> Add Product
+        </a>
+        <a href="index.html" class="sup-nav-link" title="Customer storefront">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Storefront
+        </a>
+      </nav>
 
-    <div>
-      <label for="category">Category</label>
-      <select id="category" required>
-        <option value="">Select category</option>
-        <option>Electronic Gadgets</option>
-        <option>Cameras</option>
-        <option>Accessories</option>
-        <option>Other</option>
-      </select>
-      <p class="error-message" id="categoryError"></p>
-    </div>
-
-    <div>
-      <label for="deposit">Deposit Amount (Minimum ₹5000)</label>
-      <input type="number" id="deposit" min="5000" required placeholder="e.g., 5000">
-      <p class="error-message" id="depositError"></p>
-    </div>
-
-    <div>
-      <label>Rental Pricing</label>
-      <div class="inline-group">
-        <input type="number" id="price" min="1" required placeholder="Price">
-        <select id="rentUnit" required>
-          <option value="">Select unit</option>
-          <option value="hour">Per Hour</option>
-          <option value="day" selected>Per Day</option>
-          <option value="week">Per Week</option>
-          <option value="month">Per Month</option>
-        </select>
+      <div class="sup-user-controls">
+        <div class="sup-user-chip" title="Current Supplier Account">
+          <div class="sup-user-avatar" id="ownerAvatar">S</div>
+          <span class="sup-user-name" id="ownerGreeting">Supplier</span>
+        </div>
+        <button class="sup-btn-signout" onclick="supplierLogout()" title="Log out from supplier account">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Sign Out</span>
+        </button>
       </div>
-      <p class="error-message" id="priceError"></p>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="sup-container">
+
+    <!-- Back & Header -->
+    <div style="max-width: 760px; margin: 0 auto 20px;">
+      <a href="manage_prod.html" class="sup-btn sup-btn-secondary sup-btn-sm" style="margin-bottom: 14px;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Inventory
+      </a>
+      <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--primary); letter-spacing: -0.02em;">
+        List a New Rental Product
+      </h1>
+
     </div>
 
-    <div>
-      <label for="description">Description</label>
-      <textarea id="description" rows="4" required placeholder="Brief description..."></textarea>
-      <p class="error-message" id="descError"></p>
+    <!-- Product Form Card -->
+    <div class="sup-card" style="max-width: 760px; margin: 0 auto;">
+      <form id="listForm" enctype="multipart/form-data" novalidate>
+
+        <!-- Section 1: Basic Information -->
+        <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-circle-info" style="color: var(--teal-700);"></i> 1. Product Details
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            Provide the name and category for accurate searching.
+          </p>
+
+          <div class="sup-form-group">
+            <label class="sup-form-label" for="productName">
+              Product Title <span class="required">*</span>
+            </label>
+            <input type="text" id="productName" class="sup-form-input" placeholder="e.g. Sony Alpha ILCE-7RM3A Mirrorless Camera" required>
+            <p class="sup-form-hint">Include brand and model name for best search visibility.</p>
+            <div class="sup-form-error" id="nameError"></div>
+          </div>
+
+          <div class="sup-form-group">
+            <label class="sup-form-label" for="category">
+              Category <span class="required">*</span>
+            </label>
+            <select id="category" class="sup-form-select" required>
+              <option value="">Select a category</option>
+              <option value="Electronic Gadgets">Electronic Gadgets </option>
+              <option value="Cameras">Cameras </option>
+              <option value="Accessories">Accessories </option>
+              <option value="Other">Other Equipment</option>
+            </select>
+            <div class="sup-form-error" id="categoryError"></div>
+          </div>
+
+          <div class="sup-form-group" style="margin-bottom: 0;">
+            <label class="sup-form-label" for="description">
+              Product Description <span class="required">*</span>
+            </label>
+            <textarea id="description" class="sup-form-textarea" rows="4" placeholder="Detail the device specifications, included accessories, physical condition, and rental terms..." required></textarea>
+            <div class="sup-form-error" id="descError"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Pricing & Deposit -->
+        <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-indian-rupee-sign" style="color: var(--teal-700);"></i> 2. Rental Pricing & Security Deposit
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            Set competitive rental charges and required refundable deposit.
+          </p>
+
+          <div class="sup-grid-2">
+            <div class="sup-form-group">
+              <label class="sup-form-label" for="price">
+                Rental Price (₹) <span class="required">*</span>
+              </label>
+              <input type="number" id="price" class="sup-form-input" min="1" step="0.01" placeholder="e.g. 1500" required>
+              <div class="sup-form-error" id="priceError"></div>
+            </div>
+
+            <div class="sup-form-group">
+              <label class="sup-form-label" for="rentUnit">
+                Billing Unit <span class="required">*</span>
+              </label>
+              <select id="rentUnit" class="sup-form-select" required>
+                <option value="hour">Per Hour</option>
+                <option value="day" selected>Per Day</option>
+                <option value="week">Per Week</option>
+                <option value="month">Per Month</option>
+              </select>
+              <div class="sup-form-error" id="rentUnitError"></div>
+            </div>
+          </div>
+
+          <div class="sup-form-group" style="margin-bottom: 0;">
+            <label class="sup-form-label" for="deposit">
+              Security Deposit (₹) <span class="required">*</span>
+            </label>
+            <input type="number" id="deposit" class="sup-form-input" min="5000" placeholder="Minimum ₹5,000" required>
+            <p class="sup-form-hint">Refundable deposit upon successful return. Standard platform policy requires a minimum of ₹5,000.</p>
+            <div class="sup-form-error" id="depositError"></div>
+          </div>
+        </div>
+
+        <!-- Section 3: Media & Verification -->
+        <div style="margin-bottom: 28px;">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-image" style="color: var(--teal-700);"></i> 3. Photos & Ownership Verification
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            Upload a clear high-resolution product image and authentic purchase invoice/bill.
+          </p>
+
+          <!-- Product Image Dropzone -->
+          <div class="sup-form-group">
+            <label class="sup-form-label">Product Image <span class="required">*</span></label>
+            <div class="sup-file-dropzone" onclick="document.getElementById('image').click()">
+              <i class="fa-solid fa-cloud-arrow-up sup-dropzone-icon"></i>
+              <p class="sup-dropzone-text">Click to browse or drop product photo here</p>
+              <p class="sup-dropzone-sub">Supports JPG, PNG, WEBP (Max 5 MB)</p>
+              <div id="imagePreviewContainer" style="display: none; margin-top: 14px;">
+                <img id="imagePreview" src="" alt="Selected Product Preview" style="max-height: 140px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); object-fit: cover;">
+                <div id="imageFileName" class="sup-file-selected"></div>
+              </div>
+            </div>
+            <input type="file" id="image" accept="image/*" style="display: none;" onchange="handleImageSelection(this)" required>
+            <div class="sup-form-error" id="imageError"></div>
+          </div>
+
+          <!-- Product Bill / Invoice Dropzone -->
+          <div class="sup-form-group" style="margin-bottom: 0;">
+            <label class="sup-form-label">Purchase Bill or Invoice <span class="required">*</span></label>
+            <div class="sup-file-dropzone" onclick="document.getElementById('bill').click()">
+              <i class="fa-solid fa-file-invoice sup-dropzone-icon" style="color: var(--primary);"></i>
+              <p class="sup-dropzone-text">Click to attach ownership receipt or invoice</p>
+              <p class="sup-dropzone-sub">Accepted format: PDF or Image (Max 5 MB)</p>
+              <div id="billFileNameContainer" style="display: none; margin-top: 10px;">
+                <span id="billFileName" class="sup-file-selected"></span>
+              </div>
+            </div>
+            <input type="file" id="bill" accept=".pdf,image/*" style="display: none;" onchange="handleBillSelection(this)" required>
+            <div class="sup-form-error" id="billError"></div>
+          </div>
+        </div>
+
+        <!-- Submit & Actions -->
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 14px; padding-top: 20px; border-top: 1px solid var(--border-light);">
+          <a href="manage_prod.html" class="sup-btn sup-btn-secondary">
+            Cancel
+          </a>
+          <button type="submit" id="submitBtn" class="sup-btn sup-btn-teal" style="min-width: 170px;">
+            <i class="fa-solid fa-check"></i> List Product
+          </button>
+        </div>
+
+      </form>
     </div>
 
-    <div>
-      <label for="image">Product Image</label>
-      <input type="file" id="image" accept="image/*" required>
-      <p class="error-message" id="imageError"></p>
-    </div>
+  </main>
 
-    <div>
-      <label for="bill">Upload Product Bill</label>
-      <input type="file" id="bill" accept=".pdf,image/*" required>
-      <small style="color:#ddd;">Accepted: PDF or image formats</small>
-      <p class="error-message" id="billError"></p>
-    </div>
+  <!-- Unified Footer -->
+  <footer class="sup-footer">
+    <p>&copy; 2026 RentIT Rental Marketplace. All rights reserved.</p>
+  </footer>
 
-    <button type="submit">Add Product</button>
-  </form>
-</main>
+  <!-- Scripts -->
+  <script src="supplier-common.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const owner = await initSupplierSession('add');
+      if (!owner) return;
+    });
 
-<footer>
-  <p>&copy; 2025 RentIT. All rights reserved.</p>
-</footer>
+    // Image preview handler
+    function handleImageSelection(input) {
+      const file = input.files[0];
+      const previewContainer = document.getElementById('imagePreviewContainer');
+      const previewImg = document.getElementById('imagePreview');
+      const nameBadge = document.getElementById('imageFileName');
+      const errorEl = document.getElementById('imageError');
+      errorEl.textContent = '';
 
-<script>
-window.addEventListener('load', function() {
-  const currentOwner = JSON.parse(localStorage.getItem('rentitCurrentOwner') || '{}');
-  if (currentOwner.name) {
-    document.getElementById('ownerGreeting').textContent = `Hello, ${currentOwner.name}`;
-  }
-});
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          errorEl.textContent = 'Image file size cannot exceed 5 MB.';
+          input.value = '';
+          previewContainer.style.display = 'none';
+          return;
+        }
 
-function logout() {
-  localStorage.removeItem('rentitOwnerLoggedIn');
-  localStorage.removeItem('rentitCurrentOwner');
-  alert('You have been logged out.');
-  window.location.href = 'index.html';
-}
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          nameBadge.innerHTML = `<i class="fa-solid fa-check"></i> ${escapeHtml(file.name)} (${(file.size / 1024).toFixed(0)} KB)`;
+          previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewContainer.style.display = 'none';
+      }
+    }
 
-document.getElementById('listForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
+    // Bill selection handler
+    function handleBillSelection(input) {
+      const file = input.files[0];
+      const nameContainer = document.getElementById('billFileNameContainer');
+      const nameBadge = document.getElementById('billFileName');
+      const errorEl = document.getElementById('billError');
+      errorEl.textContent = '';
 
-  const name = document.getElementById('productName').value.trim();
-  const category = document.getElementById('category').value;
-  const deposit = parseFloat(document.getElementById('deposit').value);
-  const price = parseFloat(document.getElementById('price').value);
-  const rentUnit = document.getElementById('rentUnit').value;
-  const description = document.getElementById('description').value.trim();
-  const imageFile = document.getElementById('image').files[0];
-  const billFile = document.getElementById('bill').files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          errorEl.textContent = 'Invoice file size cannot exceed 5 MB.';
+          input.value = '';
+          nameContainer.style.display = 'none';
+          return;
+        }
 
-  let valid = true;
-  ['nameError','categoryError','depositError','priceError','descError','imageError','billError'].forEach(id => document.getElementById(id).textContent='');
+        nameBadge.innerHTML = `<i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i> ${escapeHtml(file.name)} (${(file.size / 1024).toFixed(0)} KB)`;
+        nameContainer.style.display = 'block';
+      } else {
+        nameContainer.style.display = 'none';
+      }
+    }
 
-  if(!name){ document.getElementById('nameError').textContent="Enter product name"; valid=false; }
-  if(!category){ document.getElementById('categoryError').textContent="Select category"; valid=false; }
-  if(!deposit || deposit<5000){ document.getElementById('depositError').textContent="Deposit must be ≥ ₹5000"; valid=false; }
-  if(!price){ document.getElementById('priceError').textContent="Enter price"; valid=false; }
-  if(!rentUnit){ document.getElementById('priceError').textContent="Select rental unit"; valid=false; }
-  if(!description){ document.getElementById('descError').textContent="Enter description"; valid=false; }
-  if(!imageFile){ document.getElementById('imageError').textContent="Upload product image"; valid=false; }
-  if(!billFile){ document.getElementById('billError').textContent="Upload product bill"; valid=false; }
-  if(!valid) return;
+    // Form Submission
+    document.getElementById('listForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
 
-  const currentOwner = JSON.parse(localStorage.getItem('rentitCurrentOwner'));
-  const formData = new FormData();
-  formData.append("owner_id", currentOwner.owner_id);
-  formData.append("name", name);
-  formData.append("category", category);
-  formData.append("deposit", deposit);
-  formData.append("price", price);
-  formData.append("rentUnit", rentUnit);
-  formData.append("description", description);
-  formData.append("image", imageFile);
-  formData.append("invoice", billFile);
+      // Clear previous error messages
+      const errorIds = ['nameError', 'categoryError', 'descError', 'priceError', 'rentUnitError', 'depositError', 'imageError', 'billError'];
+      errorIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+      });
 
-  try {
-    const res = await fetch("http://localhost:3000/add-product", { method:"POST", body: formData });
-    const result = await res.json();
-    if(res.ok){
-      alert("Product listed successfully!");
-      window.location.href = 'manage_prod.html';
-    } else alert(result.message || "Server error!");
-  } catch(err) {
-    console.error(err);
-    alert("Server error! Try again later.");
-  }
-});
-</script>
+      const name = document.getElementById('productName').value.trim();
+      const category = document.getElementById('category').value;
+      const description = document.getElementById('description').value.trim();
+      const price = parseFloat(document.getElementById('price').value);
+      const rentUnit = document.getElementById('rentUnit').value;
+      const deposit = parseFloat(document.getElementById('deposit').value);
+      const imageFile = document.getElementById('image').files[0];
+      const billFile = document.getElementById('bill').files[0];
+
+      let isValid = true;
+
+      if (!name) {
+        document.getElementById('nameError').textContent = 'Please enter a product title.';
+        isValid = false;
+      }
+      if (!category) {
+        document.getElementById('categoryError').textContent = 'Please choose a category.';
+        isValid = false;
+      }
+      if (!description) {
+        document.getElementById('descError').textContent = 'Please enter a description for renters.';
+        isValid = false;
+      }
+      if (!price || isNaN(price) || price <= 0) {
+        document.getElementById('priceError').textContent = 'Please enter a valid positive rental price.';
+        isValid = false;
+      }
+      if (!rentUnit) {
+        document.getElementById('rentUnitError').textContent = 'Please select a rental billing unit.';
+        isValid = false;
+      }
+      if (isNaN(deposit) || deposit < 5000) {
+        document.getElementById('depositError').textContent = 'Deposit amount must be at least ₹5,000.';
+        isValid = false;
+      }
+      if (!imageFile) {
+        document.getElementById('imageError').textContent = 'Please upload a product photo.';
+        isValid = false;
+      }
+      if (!billFile) {
+        document.getElementById('billError').textContent = 'Please upload an ownership bill or invoice.';
+        isValid = false;
+      }
+
+      if (!isValid) {
+        showToast('Please fix the highlighted errors before submitting.', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Listing Product...';
+
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('category', category);
+      formData.append('deposit', deposit);
+      formData.append('price', price);
+      formData.append('rentUnit', rentUnit);
+      formData.append('description', description);
+      formData.append('image', imageFile);
+      formData.append('invoice', billFile);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/add-product`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          showToast('Product listed successfully!', 'success');
+          setTimeout(() => {
+            window.location.href = 'manage_prod.html';
+          }, 800);
+        } else {
+          showToast(result.message || 'Failed to list product. Please try again.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> List Product';
+        }
+      } catch (err) {
+        console.error('Add product error:', err);
+        showToast('Server error! Could not connect to the backend.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> List Product';
+      }
+    });
+  </script>
 </body>
 </html>

@@ -1,75 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Owner Login - RentIT</title>
-<style>
-body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8f9fa; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-.login-container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-h2 { margin-bottom: 20px; color: #333; }
-.form-group { text-align: left; margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: bold; color: #555; }
-.form-group input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; }
-.login-btn { background: #ff6600; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-.login-btn:hover { background: #e65c00; }
-.signup-link { margin-top: 15px; font-size: 0.9rem; }
-.signup-link a { color: #0066c0; text-decoration: none; font-weight: bold; }
-.signup-link a:hover { text-decoration: underline; }
-.error-message { color: red; margin-top: 10px; font-size: 0.9rem; }
-</style>
-</head>
-<body>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Supplier Login - RentIT</title>
 
-<div class="login-container">
-  <h2>Owner Login</h2>
-  <form id="ownerLoginForm">
-    <div class="form-group">
-      <label for="ownerEmail">Email</label>
-      <input type="email" id="ownerEmail" placeholder="Enter your email" required>
-    </div>
-    <div class="form-group">
-      <label for="ownerPassword">Password</label>
-      <input type="password" id="ownerPassword" placeholder="Enter your password" required>
-    </div>
-    <button type="submit" class="login-btn">Login</button>
-  </form>
-
-  <p id="errorMsg" class="error-message"></p>
-  <p class="signup-link">New here? <a href="owner_reg.html">Register now</a></p>
-</div>
-
-<script>
-document.getElementById("ownerLoginForm").addEventListener("submit", async function(e){
-  e.preventDefault();
-
-  const email = document.getElementById("ownerEmail").value.trim();
-  const password = document.getElementById("ownerPassword").value.trim();
-  const errorMsg = document.getElementById("errorMsg");
-
-  try {
-    const res = await fetch("http://localhost:3000/owner-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-
-    const result = await res.json();
-
-    if(res.ok) {
-      // login successful
-      localStorage.setItem("rentitOwnerLoggedIn", "true");
-      localStorage.setItem("rentitCurrentOwner", JSON.stringify(result.owner));
-      window.location.href = "owner_dash.html";
-    } else {
-      errorMsg.textContent = result.message || "Invalid email or password.";
+  <!-- FontAwesome & Unified Stylesheet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="supplier.css">
+  <style>
+    .auth-canvas {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 20px;
+      background: radial-gradient(circle at top, rgba(13, 148, 136, 0.08) 0%, transparent 60%), var(--bg-canvas);
     }
-  } catch(err) {
-    console.error(err);
-    errorMsg.textContent = "Server error! Please try again later.";
-  }
-});
-</script>
+    .auth-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 440px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-lg);
+      padding: 36px 32px;
+    }
+  </style>
+</head>
+<body style="background-color: var(--bg-canvas);">
+
+  <div class="auth-canvas">
+
+    <!-- Brand Header -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="index.html" class="sup-brand" style="justify-content: center; margin-bottom: 8px;">
+        <div class="sup-brand-logo"><i class="fa-solid fa-cube"></i></div>
+        <span class="sup-brand-text">RentIT</span>
+      </a>
+      <span class="sup-badge sup-badge-teal">
+        <i class="fa-solid fa-shield-halved"></i> Supplier Portal
+      </span>
+    </div>
+
+    <!-- Login Card -->
+    <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 6px; letter-spacing: -0.02em;">
+          Sign in to your account
+        </h1>
+
+      </div>
+
+      <!-- Alert Message Box -->
+      <div id="alertBox" style="display: none; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 18px; font-size: 0.85rem; font-weight: 600;">
+      </div>
+
+      <form id="ownerLoginForm" novalidate>
+
+        <div class="sup-form-group">
+          <label class="sup-form-label" for="ownerEmail">
+            Email Address <span class="required">*</span>
+          </label>
+          <div style="position: relative;">
+            <input type="email" id="ownerEmail" class="sup-form-input" placeholder="e.g. supplier@domain.com" required style="padding-left: 36px;">
+            <i class="fa-solid fa-envelope" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 0.9rem;"></i>
+          </div>
+        </div>
+
+        <div class="sup-form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="sup-form-label" for="ownerPassword" style="margin-bottom: 0;">
+              Password <span class="required">*</span>
+            </label>
+          </div>
+          <div style="position: relative;">
+            <input type="password" id="ownerPassword" class="sup-form-input" placeholder="Enter your password" required style="padding-left: 36px; padding-right: 36px;">
+            <i class="fa-solid fa-lock" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 0.9rem;"></i>
+            <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
+              <i id="eyeIcon" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="loginBtn" class="sup-btn sup-btn-primary" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 0.95rem;">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to Portal
+        </button>
+
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); text-align: center; font-size: 0.875rem; color: var(--text-muted);">
+        Don't have a supplier account yet?
+        <a href="owner_reg.html" style="color: var(--teal-700); font-weight: 700; text-decoration: none; margin-left: 4px;">
+          Register here
+        </a>
+      </div>
+    </div>
+
+    <!-- Back to Storefront Link -->
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: none; font-weight: 600;">
+        <i class="fa-solid fa-arrow-left"></i> Return to customer marketplace
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3001`;
+
+    function togglePasswordVisibility() {
+      const input = document.getElementById('ownerPassword');
+      const icon = document.getElementById('eyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+      }
+    }
+
+    function showAlert(message, isError = true) {
+      const box = document.getElementById('alertBox');
+      box.style.display = 'block';
+      box.style.background = isError ? 'var(--danger-bg)' : 'var(--success-bg)';
+      box.style.color = isError ? 'var(--danger-text)' : 'var(--success-text)';
+      box.style.border = `1px solid ${isError ? 'var(--danger-border)' : 'var(--success-border)'}`;
+      box.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
+    }
+
+    document.getElementById('ownerLoginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('ownerEmail').value.trim();
+      const password = document.getElementById('ownerPassword').value.trim();
+
+      if (!email || !password) {
+        showAlert('Please enter both your email address and password.');
+        return;
+      }
+
+      const loginBtn = document.getElementById('loginBtn');
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/owner-login`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          showAlert('Login successful! Redirecting to dashboard...', false);
+          localStorage.setItem('rentitOwnerLoggedIn', 'true');
+          if (result.owner) {
+            localStorage.setItem('rentitCurrentOwner', JSON.stringify(result.owner));
+          }
+          setTimeout(() => {
+            window.location.href = 'owner_dash.html';
+          }, 500);
+        } else {
+          showAlert(result.message || 'Invalid email or password. Please try again.');
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to Portal';
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        showAlert('Could not connect to the authentication server. Please ensure the backend is running.');
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to Portal';
+      }
+    });
+  </script>
 
 </body>
 </html>

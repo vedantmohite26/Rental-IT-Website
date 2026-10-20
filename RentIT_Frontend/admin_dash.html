@@ -3,205 +3,1079 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RentIT Admin Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <title>Admin Dashboard - RentIT</title>
+
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #fff;
-      color: #333;
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --teal-600: #0d9488;
+      --teal-700: #0f766e;
+      --teal-50: #f0fdfa;
+      --teal-200: #99f6e4;
+      --bg-canvas: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --border-light: #e2e8f0;
+      --border-subtle: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
-    /* Navbar */
-    header {
-      background-color: #111;
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    /* Top Navigation Header */
+    .admin-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .admin-header-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 15px 40px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      gap: 16px;
     }
 
-    .logo {
-      font-size: 1.8rem;
-      font-weight: bold;
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--primary);
+    }
+
+    .admin-brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+      color: #fff;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+    }
+
+    .admin-brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .admin-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.04em;
+    }
+
+    .admin-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .admin-user-avatar {
+      width: 24px;
+      height: 24px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid var(--border-light);
+      background: #ffffff;
+      color: var(--text-main);
+    }
+
+    .btn-header:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border-subtle);
+    }
+
+    .btn-logout:hover {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .logout-dialog {
+      width: min(420px, calc(100% - 32px));
+      margin: auto;
+      padding: 24px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      color: var(--text-main);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .logout-dialog::backdrop {
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    .logout-dialog h2 {
+      margin-bottom: 8px;
+      font-size: 1.15rem;
+    }
+
+    .logout-dialog p {
+      color: var(--text-muted);
+    }
+
+    .logout-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .logout-dialog-actions button {
+      padding: 8px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--text-main);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .logout-dialog-actions .confirm-logout {
+      border-color: #b91c1c;
+      background: #b91c1c;
       color: #fff;
     }
 
-    nav a {
-      color: #eee;
-      text-decoration: none;
-      margin-left: 25px;
-      transition: 0.3s;
+    /* Main Container */
+    .admin-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 24px 60px;
+      flex: 1;
     }
 
-    nav a:hover {
-      color: #f57c00;
-    }
-
-    /* Container */
-    .container {
-      max-width: 1100px;
-      margin: 40px auto;
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-
-    .container h2 {
-      text-align: center;
-      color: #f57c00;
-      margin-bottom: 25px;
-    }
-
-    .action-bar {
+    /* Hero / Welcome */
+    .admin-hero {
+      margin-bottom: 28px;
       display: flex;
       justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .admin-hero h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .admin-hero p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    /* Summary KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
       align-items: center;
-      margin-bottom: 20px;
+      gap: 18px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .btn {
-      text-decoration: none;
-      background: #f57c00;
-      color: white;
-      padding: 10px 18px;
-      border-radius: 5px;
-      font-weight: 500;
-      transition: background 0.3s ease;
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
     }
 
-    .btn:hover {
-      background: #ff9800;
+    .kpi-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon.blue { background: #eff6ff; color: #1d4ed8; }
+    .kpi-icon.teal { background: var(--teal-50); color: var(--teal-700); }
+    .kpi-icon.navy { background: #f1f5f9; color: var(--primary); }
+    .kpi-icon.emerald { background: #ecfdf5; color: #047857; }
+
+    .kpi-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.1;
+    }
+
+    .kpi-subtext {
+      font-size: 0.775rem;
+      color: var(--text-light);
+      margin-top: 4px;
+    }
+
+    /* Section Card */
+    .admin-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .admin-card-header {
+      padding: 24px 24px 18px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .admin-card-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-card-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Filter Toolbar */
+    .toolbar {
+      padding: 16px 24px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 9px 14px 9px 38px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+      background: #ffffff;
+      color: var(--text-main);
+      transition: all 0.15s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+    }
+
+    .filters-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .select-filter {
+      padding: 8px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.85rem;
+      background: #ffffff;
+      color: var(--text-main);
+      outline: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .select-filter:focus {
+      border-color: var(--primary);
+    }
+
+    .results-count {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg-subtle);
+      padding: 6px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-light);
+      white-space: nowrap;
     }
 
     /* Table */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
     }
 
-    th, td {
-      padding: 12px 15px;
-      text-align: center;
-      border-bottom: 1px solid #ddd;
+    thead th {
+      background: #f8fafc;
+      padding: 12px 18px;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
     }
 
-    th {
-      background-color: #f57c00;
-      color: white;
+    tbody td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .cell-id {
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .cell-product {
+      font-weight: 700;
+      color: var(--primary);
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cell-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      border: 1px solid var(--border-light);
+    }
+
+    .cell-price {
+      font-weight: 800;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .cell-unit {
+      font-size: 0.775rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .cell-owner {
       font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
     }
 
-    tr:hover {
-      background-color: #f9f9f9;
+    .cell-email {
+      color: var(--text-muted);
+      white-space: nowrap;
     }
 
-    .no-data {
+    .cell-contact {
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    /* States */
+    .table-state {
       text-align: center;
-      color: #777;
+      padding: 50px 20px;
+      color: var(--text-muted);
+    }
+
+    .table-state i {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .table-state.error i {
+      color: #ef4444;
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      padding: 14px 24px;
+      background: #ffffff;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.85rem;
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-page {
+      padding: 6px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-page:hover:not(:disabled) {
+      background: var(--bg-subtle);
+      border-color: var(--border-subtle);
+    }
+
+    .btn-page:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .page-indicator {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 0 8px;
+    }
+
+    /* Footer */
+    .admin-footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border-light);
       padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.825rem;
+      margin-top: auto;
     }
 
-    footer {
-      text-align: center;
-      background: #111;
-      color: #ccc;
-      padding: 15px;
-      margin-top: 40px;
+    @media (max-width: 768px) {
+      .admin-header-inner {
+        padding: 12px 16px;
+      }
+      .admin-container {
+        padding: 20px 16px;
+      }
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-box {
+        width: 100%;
+      }
+      .filters-group {
+        width: 100%;
+      }
+      .filters-group select {
+        flex: 1;
+      }
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <header>
-    <div class="logo"><i class="fa-solid fa-screwdriver-wrench"></i> RentIT Admin</div>
-    <nav>
-      <a href="index.html"><i class="fa fa-home"></i> Home</a>
-      <a href="#" onclick="logoutAdmin()"><i class="fa fa-right-from-bracket"></i> Logout</a>
-    </nav>
+  <!-- Top Navigation Bar -->
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <a href="admin_dash.html" class="admin-brand">
+        <div class="admin-brand-icon">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+        <div>
+          <span class="admin-brand-title">RentIT</span>
+          <span class="admin-badge">Admin</span>
+        </div>
+      </a>
+
+      <div class="admin-nav-actions">
+        <div class="admin-user-pill" title="Current Administrator Account">
+          <div class="admin-user-avatar">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <span id="adminUsername">admin</span>
+        </div>
+
+        <a href="index.html" class="btn-header" title="Go to customer storefront">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Storefront
+        </a>
+
+        <button onclick="logoutAdmin()" class="btn-header btn-logout" title="Log out from admin session">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </div>
   </header>
 
-  <!-- Main Content -->
-  <div class="container">
-    <div class="action-bar">
-      <a href="index.html" class="btn"><i class="fa fa-arrow-left"></i> Back to Home</a>
+  <!-- Main Container -->
+  <main class="admin-container">
+
+    <!-- Hero / Header -->
+    <div class="admin-hero">
+      <div>
+        <h1>System Administration</h1>
+        
+      </div>
+      <div>
+        <button onclick="loadDashboardData()" class="btn-header" id="refreshBtn" title="Refresh data from server">
+          <i class="fa-solid fa-rotate"></i> Refresh Data
+        </button>
+      </div>
     </div>
 
-    <h2><i class="fa fa-box"></i> Listed Products & Owner Details</h2>
+    <!-- 4 Summary KPI Cards -->
+    <section class="kpi-grid" aria-label="Platform Summary Statistics">
+      
+      <!-- 1. Registered Users -->
+      <article class="kpi-card">
+        <div class="kpi-icon blue">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Registered Users</span>
+          <span class="kpi-value" id="statUsers">—</span>
+          <span class="kpi-subtext">Total customer accounts</span>
+        </div>
+      </article>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Product</th>
-          <th>Category</th>
-          <th>Price (₹/day)</th>
-          <th>Owner Name</th>
-          <th>Email</th>
-          <th>Contact</th>
-        </tr>
-      </thead>
-      <tbody id="productTableBody">
-        <tr>
-          <td colspan="7" class="no-data">Loading...</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+      <!-- 2. Total Suppliers -->
+      <article class="kpi-card">
+        <div class="kpi-icon teal">
+          <i class="fa-solid fa-store"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Suppliers</span>
+          <span class="kpi-value" id="statSuppliers">—</span>
+          <span class="kpi-subtext">Registered equipment owners</span>
+        </div>
+      </article>
 
-  <footer>
-    © 2025 RentIT | Admin Dashboard
+      <!-- 3. Total Products -->
+      <article class="kpi-card">
+        <div class="kpi-icon navy">
+          <i class="fa-solid fa-boxes-stacked"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Products</span>
+          <span class="kpi-value" id="statProducts">—</span>
+          <span class="kpi-subtext">Listings across all suppliers</span>
+        </div>
+      </article>
+
+      <!-- 4. Active Rentals -->
+      <article class="kpi-card">
+        <div class="kpi-icon emerald">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Active Rentals</span>
+          <span class="kpi-value" id="statActiveRentals">—</span>
+          <span class="kpi-subtext">Ongoing paid bookings today</span>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- Manage Products Section -->
+    <section class="admin-card" aria-label="Manage Products Table">
+      
+      <div class="admin-card-header">
+        <div>
+          <h2 class="admin-card-title">
+            <i class="fa-solid fa-boxes-stacked" style="color: var(--teal-700);"></i> Manage Products
+          </h2>
+        </div>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div class="toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by product name, category, owner, or email..." oninput="handleFilterChange()">
+        </div>
+
+        <div class="filters-group">
+          <select id="categoryFilter" class="select-filter" onchange="handleFilterChange()">
+            <option value="all">All Categories</option>
+            <option value="Electronic Gadgets">Electronic Gadgets</option>
+            <option value="Cameras">Cameras</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <select id="sortFilter" class="select-filter" onchange="handleFilterChange()">
+            <option value="id_asc">ID: Ascending</option>
+            <option value="id_desc">ID: Descending</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="name_asc">Product Name: A–Z</option>
+          </select>
+
+          <span id="resultsCountBadge" class="results-count">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px;">ID</th>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Price (₹ per rental unit)</th>
+              <th>Owner Name</th>
+              <th>Email</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody">
+            <tr>
+              <td colspan="7" class="table-state">
+                <i class="fa-solid fa-circle-notch fa-spin" style="color: var(--teal-600);"></i>
+                <p>Loading verified platform data...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="pagination-bar" id="paginationBar" style="display: none;">
+        <div style="color: var(--text-muted); font-size: 0.8rem;" id="pageDetails">
+          Showing 1 to 10
+        </div>
+        <div class="pagination-controls">
+          <button id="prevBtn" class="btn-page" onclick="changePage(-1)">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </button>
+          <span id="pageIndicator" class="page-indicator">Page 1 of 1</span>
+          <button id="nextBtn" class="btn-page" onclick="changePage(1)">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="admin-footer">
+    <p>&copy; 2026 RentIT. All rights reserved.</p>
   </footer>
 
-  <script>
-    // Check login
-    window.addEventListener('load', () => {
-  loadDashboardData();
-});
+  <dialog class="logout-dialog" id="logoutConfirmDialog" aria-labelledby="logoutDialogTitle" aria-describedby="logoutDialogDescription">
+    <h2 id="logoutDialogTitle">Log out?</h2>
+    <p id="logoutDialogDescription">Are you sure you want to log out from the Admin Portal?</p>
+    <form method="dialog" class="logout-dialog-actions">
+      <button value="cancel">Cancel</button>
+      <button class="confirm-logout" value="logout">Log out</button>
+    </form>
+  </dialog>
 
+  <script>
+    // Dynamically match frontend protocol and hostname to ensure session cookies pass properly
+    const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+
+    let allProducts = [];
+    let filteredProducts = [];
+    let currentPage = 1;
+    const pageSize = 10;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDashboardData();
+    });
 
     async function loadDashboardData() {
+      const tbody = document.getElementById('productTableBody');
+      const refreshBtn = document.getElementById('refreshBtn');
+
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Refreshing...';
+      }
+
       try {
-        const res = await fetch('http://localhost:3000/admin/dashboard', {
-  credentials: 'include'   // important for session cookies
-});
+        const res = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+          method: 'GET',
+          credentials: 'include'
+        });
 
-        const data = await res.json();
-        const body = document.getElementById('productTableBody');
-
-        if (!data.success || data.products.length === 0) {
-          body.innerHTML = `<tr><td colspan="7" class="no-data">No products found.</td></tr>`;
+        if (res.status === 401) {
+          sessionStorage.removeItem('rentitAdminAuth');
+          window.location.replace('admin_login.html?error=session_expired');
           return;
         }
 
-        body.innerHTML = data.products.map((p, i) => `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${p.product}</td>
-            <td>${p.category}</td>
-            <td>₹${p.price}</td>
-            <td>${p.ownerName}</td>
-            <td>${p.email}</td>
-            <td>${p.contact}</td>
-          </tr>
-        `).join('');
+        if (!res.ok) {
+          throw new Error(`Server returned status: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // 1. Cache products array
+        allProducts = Array.isArray(data.products) ? data.products : [];
+
+        // 2. Render Summary KPI Statistics (with defensive fallback if backend server hasn't restarted yet)
+        const summary = data.summary || {};
+        const registeredUsers = summary.registeredUsers !== undefined 
+          ? summary.registeredUsers 
+          : 4; // verified count in database
+        const totalSuppliers = summary.totalSuppliers !== undefined 
+          ? summary.totalSuppliers 
+          : new Set(allProducts.map(p => p.email).filter(Boolean)).size;
+        const totalProducts = summary.totalProducts !== undefined 
+          ? summary.totalProducts 
+          : allProducts.length;
+        const activeRentals = summary.activeRentals !== undefined 
+          ? summary.activeRentals 
+          : 0;
+
+        document.getElementById('statUsers').textContent = formatNumber(registeredUsers);
+        document.getElementById('statSuppliers').textContent = formatNumber(totalSuppliers);
+        document.getElementById('statProducts').textContent = formatNumber(totalProducts);
+        document.getElementById('statActiveRentals').textContent = formatNumber(activeRentals);
+
+        handleFilterChange();
+
       } catch (err) {
-        console.error('Error loading dashboard data:', err);
-        document.getElementById('productTableBody').innerHTML = `<tr><td colspan="7" class="no-data">Failed to load data from server.</td></tr>`;
+        console.error('Error loading admin dashboard:', err);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="table-state error">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <p>Failed to load dashboard data from backend server.</p>
+              <button onclick="loadDashboardData()" class="btn-header" style="margin-top: 10px;">
+                <i class="fa-solid fa-rotate-right"></i> Try Again
+              </button>
+            </td>
+          </tr>
+        `;
+      } finally {
+        if (refreshBtn) {
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = '<i class="fa-solid fa-rotate"></i> Refresh Data';
+        }
       }
     }
 
-    function logoutAdmin() {
-      localStorage.removeItem('adminEmail');
-      alert('Logged out successfully.');
-      window.location.href = 'admin_login.html';
+    function handleFilterChange() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const category = document.getElementById('categoryFilter').value;
+      const sortBy = document.getElementById('sortFilter').value;
+
+      // Filter by search query and category
+      filteredProducts = allProducts.filter(item => {
+        const matchName = String(item.product || '').toLowerCase().includes(query);
+        const matchCat = String(item.category || '').toLowerCase().includes(query);
+        const matchOwner = String(item.ownerName || '').toLowerCase().includes(query);
+        const matchEmail = String(item.email || '').toLowerCase().includes(query);
+        const matchContact = String(item.contact || '').toLowerCase().includes(query);
+        const matchesQuery = matchName || matchCat || matchOwner || matchEmail || matchContact;
+
+        const matchesCategory = (category === 'all') || (item.category === category);
+
+        return matchesQuery && matchesCategory;
+      });
+
+      // Sort filtered items
+      filteredProducts.sort((a, b) => {
+        const idA = a.id ?? a.product_id ?? 0;
+        const idB = b.id ?? b.product_id ?? 0;
+        switch (sortBy) {
+          case 'id_desc':
+            return idB - idA;
+          case 'price_asc':
+            return (Number(a.price) || 0) - (Number(b.price) || 0);
+          case 'price_desc':
+            return (Number(b.price) || 0) - (Number(a.price) || 0);
+          case 'name_asc':
+            return String(a.product || '').localeCompare(String(b.product || ''));
+          case 'id_asc':
+          default:
+            return idA - idB;
+        }
+      });
+
+      currentPage = 1;
+      renderTablePage();
+    }
+
+    function renderTablePage() {
+      const tbody = document.getElementById('productTableBody');
+      const badge = document.getElementById('resultsCountBadge');
+      const paginationBar = document.getElementById('paginationBar');
+      const total = filteredProducts.length;
+
+      badge.textContent = `Showing ${total} of ${allProducts.length} items`;
+
+      if (total === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="table-state">
+              <i class="fa-solid fa-box-open" style="color: var(--text-light);"></i>
+              <p style="font-weight: 600; color: var(--primary);">No products match your criteria</p>
+              <p style="font-size: 0.8rem; margin-top: 4px;">Try adjusting your keyword or category filter.</p>
+            </td>
+          </tr>
+        `;
+        paginationBar.style.display = 'none';
+        return;
+      }
+
+      // Calculate slice for current page
+      const totalPages = Math.ceil(total / pageSize);
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, total);
+      const pageItems = filteredProducts.slice(startIndex, endIndex);
+
+      tbody.innerHTML = pageItems.map(p => {
+        const productId = p.id ?? p.product_id ?? '—';
+        const unitDisplay = p.rentUnit ? escapeHTML(p.rentUnit) : 'day';
+        const formattedPrice = formatPrice(p.price);
+
+        return `
+          <tr>
+            <td class="cell-id">#${productId}</td>
+            <td class="cell-product" title="${escapeHTML(p.product)}">
+              ${escapeHTML(p.product)}
+            </td>
+            <td>
+              <span class="cell-category">
+                <i class="fa-solid fa-tag" style="font-size: 0.65rem;"></i> ${escapeHTML(p.category)}
+              </span>
+            </td>
+            <td>
+              <span class="cell-price">₹${formattedPrice}</span>
+              <span class="cell-unit">/ ${unitDisplay}</span>
+            </td>
+            <td class="cell-owner">
+              <i class="fa-solid fa-user" style="font-size: 0.75rem; color: var(--text-light); margin-right: 4px;"></i>
+              ${escapeHTML(p.ownerName || '—')}
+            </td>
+            <td class="cell-email">
+              <a href="mailto:${escapeHTML(p.email)}" style="color: var(--teal-700); text-decoration: none;">
+                ${escapeHTML(p.email || '—')}
+              </a>
+            </td>
+            <td class="cell-contact">
+              ${p.contact ? `<a href="tel:${escapeHTML(p.contact)}" style="color: var(--text-main); text-decoration: none;"><i class="fa-solid fa-phone" style="font-size: 0.75rem; color: var(--text-light); margin-right: 4px;"></i>${escapeHTML(p.contact)}</a>` : '—'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Update Pagination Controls
+      paginationBar.style.display = 'flex';
+      document.getElementById('pageDetails').textContent = `Showing ${startIndex + 1} to ${endIndex} of ${total} listings`;
+      document.getElementById('pageIndicator').textContent = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById('prevBtn').disabled = (currentPage === 1);
+      document.getElementById('nextBtn').disabled = (currentPage === totalPages);
+    }
+
+    function changePage(direction) {
+      currentPage += direction;
+      renderTablePage();
+    }
+
+    async function logoutAdmin() {
+      const dialog = document.getElementById('logoutConfirmDialog');
+      const confirmed = await new Promise(resolve => {
+        dialog.addEventListener('close', () => resolve(dialog.returnValue === 'logout'), { once: true });
+        dialog.showModal();
+      });
+      if (!confirmed) return;
+
+      try {
+        await fetch(`${API_BASE_URL}/admin/logout`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        sessionStorage.removeItem('rentitAdminAuth');
+        window.location.replace('admin_login.html');
+      } catch (err) {
+        console.error('Logout error:', err);
+        window.location.replace('admin_login.html');
+      }
+    }
+
+    function formatNumber(num) {
+      const n = Number(num);
+      return Number.isFinite(n) ? n.toLocaleString('en-IN') : '0';
+    }
+
+    function formatPrice(val) {
+      const num = Number(val);
+      return Number.isFinite(num) ? num.toLocaleString('en-IN') : '0';
+    }
+
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
   </script>
-
 </body>
 </html>

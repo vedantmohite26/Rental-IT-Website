@@ -25,6 +25,10 @@
     .link { color: #ff6600; }
     .btn { width: 100%; padding: 12px 16px; background: #ff6600; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s ease; margin-top: 14px; }
     .btn:hover { background: #e05500; }
+    .login-message { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; font-size: 14px; }
+    .login-message[hidden] { display: none; }
+    .login-message.success { background: #ecfdf5; color: #166534; }
+    .login-message.error { background: #fef2f2; color: #b91c1c; }
     footer { background: #222; color: white; text-align: center; padding: 15px; }
     @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
   </style>
@@ -59,6 +63,7 @@
         </div>
         <button class="btn" type="submit">Login</button>
       </form>
+      <p id="loginMessage" class="login-message" role="status" aria-live="polite" hidden></p>
       <p class="subtitle" style="margin-top:12px;">New here? <a class="link" href="signup.html">Create an account</a></p>
     </section>
   </main>
@@ -68,16 +73,27 @@
   </footer>
 
   <script>
+    const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+
     async function handleLogin(e) {
       e.preventDefault();
 
       const formData = new FormData(e.target);
       const email = formData.get('email');
       const password = formData.get('password');
+      const message = document.getElementById('loginMessage');
+
+      function showLoginMessage(text, isError = false) {
+        message.textContent = text;
+        message.className = `login-message ${isError ? 'error' : 'success'}`;
+        message.setAttribute('role', isError ? 'alert' : 'status');
+        message.hidden = false;
+      }
 
       try {
-        const res = await fetch('http://localhost:3000/login', {
+        const res = await fetch(`${API_BASE_URL}/login`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
         });
@@ -85,19 +101,27 @@
         const data = await res.json();
 
         if (!res.ok) {
-          alert(data.message || 'Login failed');
+          showLoginMessage(data.message || 'Login failed', true);
           return;
         }
 
-        localStorage.setItem('rentitLoggedIn', email);
+        localStorage.setItem('rentitLoggedIn', 'true');
         localStorage.setItem('rentitCurrentUser', JSON.stringify(data.user));
 
-        alert('Login successful!');
-        window.location.href = 'index.html';
+        showLoginMessage('Login successful! Redirecting...', false);
+        const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+        const destination = returnTo
+          ? new URL(returnTo, window.location.href)
+          : new URL('index.html', window.location.href);
+        setTimeout(() => {
+          window.location.href = destination.origin === window.location.origin
+            ? destination.href
+            : 'index.html';
+        }, 600);
 
       } catch (err) {
         console.error(err);
-        alert('Error connecting to server. Make sure your backend is running.');
+        showLoginMessage('Error connecting to server. Make sure your backend is running.', true);
       }
     }
   </script>
