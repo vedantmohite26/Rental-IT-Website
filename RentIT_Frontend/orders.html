@@ -3,250 +3,511 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Orders - RentIT</title>
+  <title>Your Rental Orders & Requests - RentIT</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f8f9fa;
+    :root {
+      --primary: #0f172a;
+      --accent: #ff6600;
+      --teal: #0d9488;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --radius: 12px;
     }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
     header {
-      background: #222;
+      background: #111827;
       color: white;
-      padding: 15px 20px;
+      padding: 16px 28px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
-
     header h2 {
       margin: 0;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
+      font-weight: 800;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header h2 span { color: var(--accent); }
+
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+    .header-nav a:hover { color: #fff; }
+
+    .container {
+      max-width: 1000px;
+      margin: 32px auto;
+      padding: 0 20px;
+      flex: 1;
+      width: 100%;
     }
 
-    header button {
-      background: #fff;
-      color: #222;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .page-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* Filter pills */
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .pill {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
       cursor: pointer;
-      transition: 0.3s;
-      font-size: 0.9rem;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
     }
 
-    header button:hover {
-      background: #ddd;
-    }
-
-    #ordersInfo {
-      margin: 25px 40px 10px;
-      font-size: 1.4rem;
-      font-weight: bold;
-    }
-
-    #ordersGrid {
-      width: 90%;
-      margin: auto;
+    /* Orders Grid / Cards */
+    .orders-list {
       display: flex;
       flex-direction: column;
       gap: 18px;
     }
 
     .order-card {
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 20px;
-      transition: 0.3s;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-
     .order-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+      transform: translateY(-2px);
     }
 
-    .order-header {
+    .card-top {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 12px;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .order-id-badge {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .order-date-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
 
-    .order-status {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      font-weight: bold;
+    /* Badges */
+    .status-badge {
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       text-transform: capitalize;
     }
+    .badge-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-accepted { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-active { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .badge-returned { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+    .badge-overdue { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-rejected { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
 
-    .status-pending { background: #ffcc00; }
-    .status-approved { background: #4caf50; color: white; }
-    .status-returned { background: #2196f3; color: white; }
-    .status-cancelled { background: #f44336; color: white; }
-
-    .order-item {
+    /* Product row */
+    .card-body {
       display: flex;
-      gap: 14px;
+      gap: 20px;
       align-items: center;
+      flex-wrap: wrap;
     }
-
-    .order-item img {
-      width: 90px;
+    .product-thumb {
+      width: 100px;
       height: 90px;
-      border-radius: 10px;
+      border-radius: 8px;
       object-fit: cover;
-      border: 1px solid #ddd;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
     }
+    .product-meta {
+      flex: 1;
+      min-width: 240px;
+    }
+    .product-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .meta-row strong { color: var(--primary); }
 
-    .order-summary {
-      margin-top: 14px;
+    /* Price & summary */
+    .card-bottom {
       display: flex;
       justify-content: space-between;
-      font-weight: bold;
-      font-size: 1rem;
+      align-items: center;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .amount-display {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .amount-display span {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
     }
 
-    .order-actions {
-      margin-top: 14px;
+    .notes-box {
+      width: 100%;
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #475569;
+      margin-top: 10px;
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
     }
 
-    .btn-secondary {
-      background: #222;
-      color: #fff;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: 0.3s;
-    }
-
-    .btn-secondary:hover {
-      background: #111;
-    }
-
-    .no-orders {
+    .empty-box {
       text-align: center;
-      margin-top: 50px;
+      padding: 60px 20px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .empty-icon {
+      font-size: 3rem;
+      color: #94a3b8;
+      margin-bottom: 14px;
+    }
+    .empty-btn {
+      display: inline-block;
+      margin-top: 18px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 700;
     }
 
-    .no-orders button {
-      padding: 10px 18px;
-      background: #222;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .no-orders button:hover {
-      background: #111;
+    footer {
+      background: #111827;
+      color: #94a3b8;
+      padding: 24px;
+      text-align: center;
+      font-size: 0.9rem;
+      margin-top: 40px;
     }
   </style>
 </head>
-
 <body>
+
   <header>
-    <h2 onclick="window.location.href='index.html'">RentIT</h2>
-    <button onclick="window.location.href='index.html'">Home</button>
+    <h2 onclick="window.location.href='index.html'">
+      <i class="fa-solid fa-cube" style="color:var(--accent);"></i>
+      Rent<span>IT</span>
+    </h2>
+    <nav class="header-nav">
+      <a href="index.html"><i class="fa-solid fa-store"></i> Browse Catalog</a>
+      <a href="cart.html"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
+    </nav>
   </header>
 
-  <div id="ordersInfo">Loading orders...</div>
-  <div id="ordersGrid"></div>
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Your Rental Requests & Orders</h1>
+        <p class="page-subtitle" id="ordersSubtitle">Track booking approval, dates, and return confirmations.</p>
+      </div>
+      <div>
+        <a href="index.html" style="color:var(--accent); font-weight:700; text-decoration:none; font-size:0.95rem;">
+          <i class="fa-solid fa-plus"></i> Rent Another Item
+        </a>
+      </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="filter-pills" id="filterPills">
+      <button class="pill active" onclick="setFilter('all', this)">All Bookings</button>
+      <button class="pill" onclick="setFilter('pending', this)">Pending Approval</button>
+      <button class="pill" onclick="setFilter('accepted', this)">Approved / Active</button>
+      <button class="pill" onclick="setFilter('overdue', this)">Overdue Returns</button>
+      <button class="pill" onclick="setFilter('returned', this)">Returned</button>
+    </div>
+
+    <div class="orders-list" id="ordersList">
+      <div style="text-align: center; padding: 50px; color: var(--text-muted);">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--accent); margin-bottom: 12px;"></i>
+        <p>Loading your orders...</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 RentIT. All rights reserved.</p>
+  </footer>
 
   <script>
     const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+    let allOrders = [];
+    let currentFilter = 'all';
 
-    window.addEventListener('load', loadOrders);
+    window.addEventListener('load', loadUserOrders);
 
-    async function loadOrders() {
+    async function loadUserOrders() {
       try {
-        const sessionResponse = await fetch(`${API_BASE_URL}/user-session`, {
-          credentials: "include"
-        });
-        if (sessionResponse.status === 401) {
-          document.getElementById("ordersGrid").innerHTML = `
-            <div class="no-orders">
+        const sessionRes = await fetch(`${API_BASE_URL}/user-session`, { credentials: 'include' });
+        if (sessionRes.status === 401) {
+          document.getElementById('ordersList').innerHTML = `
+            <div class="empty-box">
+              <div class="empty-icon"><i class="fa-solid fa-lock"></i></div>
               <h3>Please Login to View Orders</h3>
-              <button onclick="window.location.href='login.html?returnTo=orders.html'">Login</button>
-            </div>`;
-          document.getElementById("ordersInfo").innerText = "";
+              <p style="color:var(--text-muted); margin-top:6px;">You must be signed in to view your rental requests and bookings.</p>
+              <a href="login.html?returnTo=orders.html" class="empty-btn">Sign In Now</a>
+            </div>
+          `;
           return;
         }
-        if (!sessionResponse.ok) {
-          throw new Error("Could not verify your login.");
-        }
 
-        const { user } = await sessionResponse.json();
-        const response = await fetch(`${API_BASE_URL}/orders/${user.user_id}`, {
-          credentials: "include"
-        });
-        if (!response.ok) {
-          throw new Error("Could not load your orders.");
-        }
-        displayOrders(await response.json());
-      } catch (error) {
-        console.error("Order loading failed:", error);
-        document.getElementById("ordersInfo").innerText = "Unable to load your orders. Please refresh and try again.";
+        if (!sessionRes.ok) throw new Error('Could not verify your login');
+        const sessionData = await sessionRes.json();
+        const userId = sessionData.user.user_id;
+
+        const res = await fetch(`${API_BASE_URL}/orders/${userId}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Could not load orders');
+
+        allOrders = await res.json();
+        renderOrders();
+
+      } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('ordersList').innerHTML = `
+          <div class="empty-box" style="color: #ef4444;">
+            <div class="empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3>Could Not Load Orders</h3>
+            <p>${err.message}</p>
+          </div>
+        `;
       }
     }
 
-    function displayOrders(orders) {
-      const grid = document.getElementById("ordersGrid");
-      const info = document.getElementById("ordersInfo");
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('#filterPills .pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      renderOrders();
+    }
 
-      if (orders.length === 0) {
-        grid.innerHTML = `
-          <div class="no-orders">
-            <h3>No Orders Yet</h3>
-            <p>Start Renting Products</p>
-            <button onclick="window.location.href='index.html'">Browse Products</button>
-          </div>`;
-        info.textContent = "You have no orders yet.";
+    function renderOrders() {
+      const container = document.getElementById('ordersList');
+      const today = new Date().toISOString().split('T')[0];
+
+      let filtered = allOrders.filter(order => {
+        const status = (order.effective_status || order.status || '').toLowerCase();
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'pending') return status === 'pending';
+        if (currentFilter === 'accepted') return ['accepted', 'approved', 'paid', 'active'].includes(status) && !order.is_overdue;
+        if (currentFilter === 'overdue') return order.is_overdue || status === 'overdue';
+        if (currentFilter === 'returned') return status === 'returned';
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-box">
+            <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+            <h3>No ${currentFilter === 'all' ? 'Orders' : currentFilter} Found</h3>
+            <p style="color:var(--text-muted); margin-top:6px;">Browse our catalog to select products, choose rental dates, and submit booking requests.</p>
+            <a href="index.html" class="empty-btn"><i class="fa-solid fa-store"></i> Explore Equipment</a>
+          </div>
+        `;
         return;
       }
 
-      info.textContent = `You have ${orders.length} order${orders.length > 1 ? 's' : ''}`;
+      container.innerHTML = filtered.map(order => {
+        const rawStatus = (order.status || 'Pending').toLowerCase();
+        const isOverdue = order.is_overdue;
 
-      grid.innerHTML = orders.map(order => `
-        <div class="order-card">
-          <div class="order-header">
-            <div>
-              <div class="order-id">Order #${order.order_id}</div>
-              <div class="order-date">Placed on ${order.created_at.split(" ")[0]}</div>
+        let badgeClass = 'badge-pending';
+        let badgeText = 'Pending Approval';
+        let badgeIcon = 'fa-clock';
+
+        if (rawStatus === 'returned') {
+          badgeClass = 'badge-returned';
+          badgeText = 'Returned & Confirmed';
+          badgeIcon = 'fa-circle-check';
+        } else if (isOverdue) {
+          badgeClass = 'badge-overdue';
+          badgeText = 'Overdue Return';
+          badgeIcon = 'fa-triangle-exclamation';
+        } else if (['accepted', 'approved', 'paid', 'active'].includes(rawStatus)) {
+          badgeClass = 'badge-accepted';
+          badgeText = 'Approved / Stock Reserved';
+          badgeIcon = 'fa-circle-check';
+        } else if (rawStatus === 'rejected') {
+          badgeClass = 'badge-rejected';
+          badgeText = 'Request Rejected';
+          badgeIcon = 'fa-circle-xmark';
+        }
+
+        const imageSrc = order.product_image ? `${API_BASE_URL}/uploads/${encodeURIComponent(order.product_image)}` : 'image/dslr.jpg';
+        const qty = order.quantity || 1;
+
+        return `
+          <div class="order-card">
+            <div class="card-top">
+              <div>
+                <div class="order-id-badge">
+                  <i class="fa-solid fa-receipt" style="color:var(--accent);"></i>
+                  Booking Request #${order.order_id}
+                </div>
+                <div class="order-date-text">
+                  Submitted on ${order.created_at ? order.created_at.split('T')[0].split(' ')[0] : 'Recently'}
+                </div>
+              </div>
+
+              <div>
+                <span class="status-badge ${badgeClass}">
+                  <i class="fa-solid ${badgeIcon}"></i> ${badgeText}
+                </span>
+              </div>
             </div>
-            <span class="order-status status-${order.status.toLowerCase()}">${order.status}</span>
-          </div>
 
-          <div class="order-item">
-            <img src="${order.product_image}" alt="${order.product_name}">
-            <div>
-              <h4>${order.product_name}</h4>
-              <p>Rental: ${order.rent_start} to ${order.rent_end}</p>
+            <div class="card-body">
+              <img src="${imageSrc}" alt="${escapeHtml(order.product_name)}" class="product-thumb" onerror="this.src='image/dslr.jpg'">
+              
+              <div class="product-meta">
+                <h3 class="product-title">${escapeHtml(order.product_name)}</h3>
+                
+                <div class="meta-row">
+                  <div><strong>Quantity:</strong> ${qty} unit(s)</div>
+                  <div><strong>Period:</strong> ${order.rent_start} to ${order.rent_end}</div>
+                </div>
+
+                <div class="meta-row">
+                  <div><strong>Supplier:</strong> ${escapeHtml(order.supplier_name || 'RentIT Verified Supplier')}</div>
+                  ${order.supplier_phone ? `<div><strong>Contact:</strong> ${escapeHtml(order.supplier_phone)}</div>` : ''}
+                </div>
+              </div>
+            </div>
+
+            ${order.supplier_notes ? `
+              <div class="notes-box">
+                <i class="fa-solid fa-message" style="color:var(--teal);"></i>
+                <span><strong>Supplier Note:</strong> ${escapeHtml(order.supplier_notes)}</span>
+              </div>
+            ` : ''}
+
+            ${order.return_confirmed_at ? `
+              <div class="notes-box" style="background:#f3e8ff; color:#6b21a8;">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <span><strong>Return Confirmed:</strong> Returned on ${order.return_confirmed_at.replace('T', ' ').substring(0, 19)}</span>
+              </div>
+            ` : ''}
+
+            <div class="card-bottom">
+              <div class="amount-display">
+                ₹${Number(order.total_amount).toLocaleString('en-IN')}
+                <span>(Rent + Refundable Deposit)</span>
+              </div>
+
+              <div>
+                <a href="product_details.html?id=${order.product_id}" class="pill" style="text-decoration:none;">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> View Product
+                </a>
+              </div>
             </div>
           </div>
-
-          <div class="order-summary">
-            <span>Total:</span>
-            <span>₹${order.total_amount}</span>
-          </div>
-
-          <div class="order-actions">
-            <button class="btn-secondary" onclick="viewOrder(${order.order_id})">View Details</button>
-          </div>
-        </div>
-      `).join("");
+        `;
+      }).join('');
     }
 
-    function viewOrder(order_id) {
-      alert("Order details page coming soon!\nOrder ID: " + order_id);
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
   </script>
 </body>

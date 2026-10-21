@@ -11,8 +11,8 @@
         return;
     }
 
-    const API_URL = "http://localhost:3000/api/chat";
-    const IMAGE_BASE_URL = "http://localhost:3000/uploads/";
+    const API_URL = "http://localhost:3001/api/chat";
+    const IMAGE_BASE_URL = "http://localhost:3001/uploads/";
 
 
     /* -------------------------------------------------

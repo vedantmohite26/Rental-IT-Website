@@ -27,9 +27,38 @@
       box-shadow: var(--shadow-lg);
       padding: 36px 32px;
     }
+    .back-home-btn {
+      position: fixed;
+      top: 16px;
+      left: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: 999px;
+      padding: 7px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      transition: color 0.18s, box-shadow 0.18s, background 0.18s;
+      z-index: 100;
+    }
+    .back-home-btn:hover {
+      color: var(--primary);
+      background: var(--bg-canvas);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body style="background-color: var(--bg-canvas);">
+
+  <!-- Back to Home — top left -->
+  <a href="index.html" class="back-home-btn">
+    <i class="fa-solid fa-arrow-left"></i> Back to Home
+  </a>
 
   <div class="reg-canvas">
 
@@ -122,13 +151,9 @@
     </div>
 
     <!-- Return to Storefront -->
-    <div style="margin-top: 20px; text-align: center;">
-      <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: none; font-weight: 600;">
-        <i class="fa-solid fa-arrow-left"></i> Return to customer marketplace
-      </a>
-    </div>
+    
 
-  </div>
+ 
 
   <script>
     const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3001`;

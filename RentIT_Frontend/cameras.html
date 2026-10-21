@@ -115,13 +115,14 @@
 </footer>
 
 <script>
+const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
 let products = [];
 
 window.addEventListener('load', async () => { await loadProducts(); });
 
 async function loadProducts() {
   try {
-    const res = await fetch('http://localhost:3000/products/category/cameras');
+    const res = await fetch(`${API_BASE_URL}/products/category/cameras`);
     const data = await res.json();
     products = data.products || [];
     displayProducts(products);
@@ -137,19 +138,30 @@ function displayProducts(items) {
     grid.innerHTML = `<div class="no-products"><h3>No cameras available</h3><p>Be the first to list a camera for rent!</p><button onclick="window.location.href='owner_login.html'" style="margin-top:15px;">List Your Camera</button></div>`;
     return;
   }
-  grid.innerHTML = items.map(p => `
-    <div class="product-card">
-      <img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}" onerror="this.src='image/dslr.jpg'">
-      <h3>${p.name}</h3>
-      <p>${p.description}</p>
-      <div class="product-price">₹${p.price}/${p.rentUnit || 'day'}</div>
-      <p><strong>Deposit:</strong> ₹${p.deposit || 0}</p>
-      <button onclick="openProduct(${p.product_id})">Rent Now</button>
-    </div>
-  `).join('');
+  grid.innerHTML = items.map(p => {
+    const qty = Number(p.quantity) || 0;
+    const availBadge = qty > 0 
+      ? `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-circle-check"></i> In Stock (${qty} available)</span>`
+      : `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
+
+    return `
+      <div class="product-card">
+        <img src="${API_BASE_URL}/uploads/${p.image}" alt="${p.name}" onerror="this.src='image/dslr.jpg'">
+        <h3>${p.name}</h3>
+        <p>${p.description || ''}</p>
+        <div>${availBadge}</div>
+        <div class="product-price">₹${p.price}/${p.rentUnit || 'day'}</div>
+        <p><strong>Deposit:</strong> ₹${p.deposit || 0}</p>
+        <button onclick="openProduct(${p.product_id})">Rent Now / Check Dates</button>
+      </div>
+    `;
+  }).join('');
 }
 
-function openProduct(id) { window.location.href = `product_details.html?id=${id}`; }
+function openProduct(id) {
+  window.location.href = `product_details.html?id=${id}`;
+}
+
 
 function sortProducts() {
   const [field, dir] = document.getElementById('sortSelect').value.split('-');

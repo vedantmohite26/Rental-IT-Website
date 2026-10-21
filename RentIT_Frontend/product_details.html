@@ -3,141 +3,986 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Details - RentIT</title>
+  <title>Product Details & Rental Booking - RentIT</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f8f9fa; }
-    header { background: #222; color: #fff; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { margin: 0; cursor: pointer; }
+    :root {
+      --primary: #0f172a;
+      --accent: #ff6600;
+      --accent-hover: #e65c00;
+      --teal: #0d9488;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
 
-    .container { max-width: 1200px; margin: 30px auto; padding: 20px; display: flex; gap: 40px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .product-image { flex: 1; }
-    .product-image img { width: 100%; border-radius: 10px; height: 350px; object-fit: cover; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-    .product-details { flex: 1; }
-    .product-details h2 { margin-top: 0; color: #333; }
-    .price { font-size: 1.6rem; color: #ff6600; margin: 10px 0; }
-    .description { margin: 15px 0; color: #555; }
-    .category { font-size: 1rem; color: #333; margin-top: 5px; }
-    .deposit { margin-top: 8px; font-size: 1rem; color: #333; }
+    header {
+      background: #111827;
+      color: #fff;
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header h1 span { color: var(--accent); }
+    .header-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-left: 20px;
+      transition: 0.2s;
+    }
+    .header-links a:hover { color: #fff; }
 
-    .rent-input { padding:8px;border-radius:5px;border:1px solid #ccc;width:150px;margin-top:10px; }
+    .main-wrapper {
+      max-width: 1200px;
+      margin: 32px auto;
+      padding: 0 20px;
+      flex: 1;
+      width: 100%;
+    }
 
-    .rent-btn { background:#ff6600; color:white; border:none; padding:12px 25px; font-size:1.1rem; cursor:pointer; border-radius:6px; margin-top:20px; font-weight:bold; }
-    .rent-btn:hover { background:#e65c00; }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--accent); }
 
-    .back { display:block; margin:20px auto; text-align:center; font-size:1rem; color:#333; text-decoration:none; }
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 36px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      padding: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .product-grid { grid-template-columns: 1fr; padding: 20px; }
+    }
+
+    /* Product Image Column */
+    .image-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .image-box {
+      width: 100%;
+      height: 400px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .image-box:hover img { transform: scale(1.02); }
+
+    .catalog-status-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .badge-in-stock { background: #dcfce7; color: #15803d; }
+    .badge-low-stock { background: #fef3c7; color: #b45309; }
+    .badge-out-of-stock { background: #fee2e2; color: #b91c1c; }
+
+    /* Product Info Column */
+    .info-pane {
+      display: flex;
+      flex-direction: column;
+    }
+    .category-tag {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--teal);
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .product-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 12px;
+      line-height: 1.25;
+    }
+    .price-box {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .current-price {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .rent-unit {
+      color: var(--text-muted);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .deposit-badge {
+      margin-left: auto;
+      background: #f1f5f9;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .product-desc {
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      white-space: pre-line;
+    }
+
+    /* Booking Card Section */
+    .booking-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 22px;
+      margin-top: auto;
+    }
+    .booking-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    .form-control {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #ffffff;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+    }
+
+    /* Quantity Stepper */
+    .qty-stepper {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      overflow: hidden;
+      width: 140px;
+    }
+    .qty-btn {
+      background: #f1f5f9;
+      border: none;
+      width: 40px;
+      height: 40px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .qty-btn:hover { background: #e2e8f0; }
+    .qty-input {
+      flex: 1;
+      border: none;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      outline: none;
+      width: 50px;
+    }
+
+    /* Real-Time Live Availability Alert Box */
+    .availability-box {
+      margin: 16px 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: all 0.3s ease;
+    }
+    .avail-available {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .avail-unavailable {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .avail-loading {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Cost Summary Breakdown */
+    .price-breakdown {
+      margin: 16px 0;
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+    .breakdown-row.total {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* Action Buttons */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .btn-submit-request {
+      flex: 2;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-submit-request:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    .btn-submit-request:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      color: #64748b;
+    }
+
+    .btn-cart {
+      flex: 1;
+      background: #ffffff;
+      color: var(--primary);
+      border: 2px solid var(--border);
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-cart:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Modal for Request Confirmation */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 520px;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+      transform: translateY(20px);
+      transition: transform 0.25s ease;
+    }
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+    .modal-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #dcfce7;
+      color: #10b981;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .modal-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .modal-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .modal-details {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      text-align: left;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .modal-details p { margin-bottom: 6px; }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .modal-btn-primary { background: var(--accent); color: white; }
+    .modal-btn-primary:hover { background: var(--accent-hover); }
+    .modal-btn-secondary { background: #f1f5f9; color: var(--text); }
+    .modal-btn-secondary:hover { background: #e2e8f0; }
+
+    footer {
+      background: #111827;
+      color: #94a3b8;
+      padding: 24px;
+      text-align: center;
+      font-size: 0.9rem;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <h1 onclick="window.location.href='index.html'">RentIT</h1>
-</header>
+  <!-- Header -->
+  <header>
+    <h1 onclick="window.location.href='index.html'">
+      <i class="fa-solid fa-cube" style="color:var(--accent);"></i>
+      Rent<span>IT</span>
+    </h1>
+    <nav class="header-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="orders.html"><i class="fa-solid fa-box-archive"></i> Your Orders</a>
+      <a href="cart.html"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
+    </nav>
+  </header>
 
-<div class="container" id="productContainer">Loading product details...</div>
-
-<a href="javascript:history.back()" class="back">← Go Back</a>
-
-<script>
-const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
-let product = null;
-
-async function loadProductDetails() {
-  const params = new URLSearchParams(window.location.search);
-  const productId = params.get('id');
-
-  if (!productId) {
-    document.getElementById('productContainer').innerHTML = "<h3>Invalid Product</h3>";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/products/${productId}`);
-    const data = await res.json();
-    if (!res.ok || !data.product) {
-      throw new Error(data.message || 'Product could not be loaded');
-    }
-    product = data.product;
-  } catch (error) {
-    document.getElementById('productContainer').textContent = error.message;
-    return;
-  }
-
-  document.getElementById('productContainer').innerHTML = `
-    <div class="product-image">
-      <img src="${API_BASE_URL}/uploads/${product.image}" alt="${product.name}" onerror="this.src='image/dslr.jpg'">
+  <!-- Main Container -->
+  <div class="main-wrapper">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <span id="breadcrumbCategory">Category</span>
+      <span>/</span>
+      <span id="breadcrumbName" style="color:var(--text); font-weight:600;">Product</span>
     </div>
-    <div class="product-details">
-      <h2>${product.name}</h2>
 
-      <div class="price">₹${product.price} / ${product.rentUnit}</div>
-
-      <div class="description">${product.description || "No description available."}</div>
-
-      <div class="category"><strong>Category:</strong> ${product.category}</div>
-
-      <div class="deposit"><strong>Refundable Deposit:</strong> ₹${product.deposit}</div>
-
-      <label style="margin-top:15px;display:block;font-weight:bold;">Enter Rental Duration (${product.rentUnit}):</label>
-      <input type="number" id="rentalDuration" min="1" value="1" class="rent-input">
-
-      <button class="rent-btn" id="rentButton">Add to Cart</button>
+    <div class="product-grid" id="productGrid">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted);">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--accent); margin-bottom: 12px;"></i>
+        <p>Loading product details & live availability...</p>
+      </div>
     </div>
-  `;
+  </div>
 
-  document.getElementById("rentButton").addEventListener("click", addToCart);
-}
+  <!-- Booking Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-card">
+      <div class="modal-icon"><i class="fa-solid fa-check"></i></div>
+      <h3 class="modal-title">Rental Request Submitted!</h3>
+      <p class="modal-desc">
+        Your booking request has been sent to the supplier. You will receive confirmation once the supplier accepts. 
+        <strong>Stock is reserved upon supplier acceptance.</strong>
+      </p>
 
-async function addToCart() {
-  try {
-    const sessionRes = await fetch(`${API_BASE_URL}/user-session`, {
-      credentials: 'include'
-    });
+      <div class="modal-details" id="modalDetails"></div>
 
-    if (sessionRes.status === 401) {
-      const returnTo = `${window.location.pathname}${window.location.search}`;
-      window.location.href = `login.html?returnTo=${encodeURIComponent(returnTo)}`;
-      return;
+      <div class="modal-actions">
+        <a href="orders.html" class="modal-btn modal-btn-primary">
+          <i class="fa-solid fa-list-check"></i> View My Requests
+        </a>
+        <button class="modal-btn modal-btn-secondary" onclick="closeConfirmModal()">
+          Continue Browsing
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 RentIT. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+    let product = null;
+    let currentAvailability = null;
+    let checkTimeout = null;
+
+    // Load Product Data
+    async function loadProduct() {
+      const params = new URLSearchParams(window.location.search);
+      const productId = params.get('id');
+
+      if (!productId) {
+        document.getElementById('productGrid').innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+            <h3>Product not found</h3>
+            <p style="color: var(--text-muted); margin-top: 8px;">Please select a valid product from our catalog.</p>
+            <a href="index.html" style="display:inline-block; margin-top: 15px; color: var(--accent); font-weight: 700;">← Back to Home</a>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/products/${productId}`);
+        const data = await res.json();
+
+        if (!res.ok || !data.product) {
+          throw new Error(data.message || 'Product could not be loaded');
+        }
+
+        product = data.product;
+        renderProductUI();
+      } catch (err) {
+        document.getElementById('productGrid').innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--danger);">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 10px;"></i>
+            <h3>Error loading product</h3>
+            <p>${err.message}</p>
+            <a href="index.html" style="display:inline-block; margin-top: 15px; color: var(--accent); font-weight: 700;">← Return to Store</a>
+          </div>
+        `;
+      }
     }
 
-    if (!sessionRes.ok) {
-      throw new Error('Could not verify your login. Please try again.');
+    function renderProductUI() {
+      document.getElementById('breadcrumbCategory').textContent = product.category || 'Rental Items';
+      document.getElementById('breadcrumbName').textContent = product.name;
+
+      const totalStock = Number(product.quantity) || 0;
+      let stockBadgeHtml = '';
+      if (totalStock === 0) {
+        stockBadgeHtml = `<div class="catalog-status-badge badge-out-of-stock"><i class="fa-solid fa-circle-xmark"></i> Catalog Out of Stock</div>`;
+      } else if (totalStock <= 2) {
+        stockBadgeHtml = `<div class="catalog-status-badge badge-low-stock"><i class="fa-solid fa-triangle-exclamation"></i> Only ${totalStock} in Catalog</div>`;
+      } else {
+        stockBadgeHtml = `<div class="catalog-status-badge badge-in-stock"><i class="fa-solid fa-circle-check"></i> ${totalStock} Total Inventory</div>`;
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+      const imageSrc = product.image ? `${API_BASE_URL}/uploads/${encodeURIComponent(product.image)}` : 'image/dslr.jpg';
+
+      document.getElementById('productGrid').innerHTML = `
+        <!-- Left: Image -->
+        <div class="image-pane">
+          <div class="image-box">
+            ${stockBadgeHtml}
+            <img src="${imageSrc}" alt="${escapeHtml(product.name)}" onerror="this.src='image/dslr.jpg'">
+          </div>
+        </div>
+
+        <!-- Right: Details & Booking Form -->
+        <div class="info-pane">
+          <span class="category-tag"><i class="fa-solid fa-tag"></i> ${escapeHtml(product.category)}</span>
+          <h2 class="product-title">${escapeHtml(product.name)}</h2>
+
+          <div class="price-box">
+            <span class="current-price">₹${Number(product.price).toLocaleString('en-IN')}</span>
+            <span class="rent-unit">/ ${escapeHtml(product.rentUnit || 'day')}</span>
+            <div class="deposit-badge" title="Refunded when product is returned in good condition">
+              <i class="fa-solid fa-shield-halved"></i> Refundable Deposit: ₹${Number(product.deposit || 0).toLocaleString('en-IN')}
+            </div>
+          </div>
+
+          <div class="product-desc">
+            ${escapeHtml(product.description || 'No detailed specifications provided for this product.')}
+          </div>
+
+          <!-- Rental Booking Box -->
+          <div class="booking-card">
+            <div class="booking-title">
+              <i class="fa-solid fa-calendar-days" style="color:var(--accent);"></i>
+              Book Your Rental Period
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="rentStartDate"><i class="fa-solid fa-calendar-plus"></i> Rental Start Date</label>
+                <input type="date" id="rentStartDate" class="form-control" min="${todayStr}" value="${todayStr}" onchange="onDatesOrQuantityChanged()">
+              </div>
+
+              <div class="form-group">
+                <label for="rentEndDate"><i class="fa-solid fa-calendar-check"></i> Rental End Date</label>
+                <input type="date" id="rentEndDate" class="form-control" min="${todayStr}" value="${tomorrowStr}" onchange="onDatesOrQuantityChanged()">
+              </div>
+            </div>
+
+            <div class="form-row" style="align-items: center;">
+              <div class="form-group">
+                <label><i class="fa-solid fa-layer-group"></i> Quantity</label>
+                <div class="qty-stepper">
+                  <button type="button" class="qty-btn" onclick="adjustQty(-1)">−</button>
+                  <input type="number" id="rentQuantity" class="qty-input" value="1" min="1" max="${Math.max(1, totalStock)}" readonly>
+                  <button type="button" class="qty-btn" onclick="adjustQty(1)">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="deliveryAddress"><i class="fa-solid fa-location-dot"></i> Delivery / Pickup City</label>
+                <input type="text" id="deliveryAddress" class="form-control" placeholder="e.g. Mumbai, Navi Mumbai" value="Default Address">
+              </div>
+            </div>
+
+            <!-- Live Availability Status Box -->
+            <div id="availabilityIndicator" class="availability-box avail-loading">
+              <i class="fa-solid fa-circle-notch fa-spin" style="margin-top:2px;"></i>
+              <div>Checking live availability for selected dates...</div>
+            </div>
+
+            <!-- Price Breakdown Calculation -->
+            <div class="price-breakdown" id="priceBreakdown">
+              <div class="breakdown-row">
+                <span>Duration:</span>
+                <span id="bdDuration">1 day(s)</span>
+              </div>
+              <div class="breakdown-row">
+                <span>Rental Charge:</span>
+                <span id="bdRental">₹0</span>
+              </div>
+              <div class="breakdown-row">
+                <span>Refundable Deposit:</span>
+                <span id="bdDeposit">₹0</span>
+              </div>
+              <div class="breakdown-row total">
+                <span>Estimated Grand Total:</span>
+                <span id="bdTotal" style="color:var(--accent);">₹0</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group">
+              <button class="btn-submit-request" id="submitRequestBtn" onclick="submitRentalRequest()">
+                <i class="fa-solid fa-paper-plane"></i> Submit Rental Request
+              </button>
+              <button class="btn-cart" id="addToCartBtn" onclick="addToCartCompat()">
+                <i class="fa-solid fa-cart-plus"></i> Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Trigger initial availability check
+      onDatesOrQuantityChanged();
     }
 
-    const sessionData = await sessionRes.json();
-    const cartKey = `rentitCart_${sessionData.user.user_id}`;
-    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+    function adjustQty(delta) {
+      const input = document.getElementById('rentQuantity');
+      if (!input || !product) return;
+      const totalStock = Number(product.quantity) || 1;
+      let val = (parseInt(input.value, 10) || 1) + delta;
+      if (val < 1) val = 1;
+      if (val > totalStock) val = totalStock;
+      input.value = val;
+      onDatesOrQuantityChanged();
+    }
 
-    const exists = cart.find(item => item.product_id === product.product_id);
-    if (exists) return alert("This product is already in your cart.");
+    function onDatesOrQuantityChanged() {
+      clearTimeout(checkTimeout);
+      updateCostBreakdown();
+      checkTimeout = setTimeout(checkLiveAvailability, 250);
+    }
 
-    let duration = parseInt(document.getElementById("rentalDuration").value);
-    if (!duration || duration < 1) duration = 1;
+    function updateCostBreakdown() {
+      const sInput = document.getElementById('rentStartDate');
+      const eInput = document.getElementById('rentEndDate');
+      const qInput = document.getElementById('rentQuantity');
 
-    cart.push({
-      product_id: product.product_id,
-      owner_id: product.owner_id,
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      rentUnit: product.rentUnit,
-      image: product.image,
-      deposit: product.deposit,
-      duration: duration
-    });
+      if (!sInput || !eInput || !qInput || !product) return;
 
-    localStorage.setItem(cartKey, JSON.stringify(cart));
-    alert("✅ Added to cart!");
-    window.location.href = "cart.html";
-  } catch (error) {
-    alert(error.message || 'Could not verify your login. Please try again.');
-  }
-}
+      const start = new Date(sInput.value);
+      const end = new Date(eInput.value);
+      const qty = parseInt(qInput.value, 10) || 1;
 
-loadProductDetails();
-</script>
+      // Ensure end date is on or after start date
+      if (end < start) {
+        eInput.value = sInput.value;
+      }
 
+      const diffTime = Math.max(0, new Date(eInput.value) - new Date(sInput.value));
+      const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+
+      const price = Number(product.price) || 0;
+      const deposit = Number(product.deposit) || 0;
+
+      const rentTotal = price * diffDays * qty;
+      const depositTotal = deposit * qty;
+      const grandTotal = rentTotal + depositTotal;
+
+      document.getElementById('bdDuration').textContent = `${diffDays} ${escapeHtml(product.rentUnit || 'day')}(s)`;
+      document.getElementById('bdRental').textContent = `₹${rentTotal.toLocaleString('en-IN')}`;
+      document.getElementById('bdDeposit').textContent = `₹${depositTotal.toLocaleString('en-IN')}`;
+      document.getElementById('bdTotal').textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+    }
+
+    async function checkLiveAvailability() {
+      const sInput = document.getElementById('rentStartDate');
+      const eInput = document.getElementById('rentEndDate');
+      const qInput = document.getElementById('rentQuantity');
+      const indicator = document.getElementById('availabilityIndicator');
+      const submitBtn = document.getElementById('submitRequestBtn');
+
+      if (!sInput || !eInput || !qInput || !indicator || !product) return;
+
+      const start = sInput.value;
+      const end = eInput.value;
+      const qty = parseInt(qInput.value, 10) || 1;
+
+      indicator.className = 'availability-box avail-loading';
+      indicator.innerHTML = `
+        <i class="fa-solid fa-circle-notch fa-spin" style="margin-top:2px;"></i>
+        <div>Checking live inventory availability for ${start} to ${end}...</div>
+      `;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/products/${product.product_id}/availability?start=${start}&end=${end}&quantity=${qty}`);
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Could not verify stock');
+        }
+
+        currentAvailability = data;
+
+        if (data.isAvailable) {
+          indicator.className = 'availability-box avail-available';
+          indicator.innerHTML = `
+            <i class="fa-solid fa-circle-check" style="font-size:1.15rem; margin-top:2px;"></i>
+            <div>
+              <strong>Available for Selected Dates!</strong>
+              <div style="font-size:0.85rem; margin-top:2px;">
+                ${data.availableUnits} unit(s) currently unreserved from ${start} to ${end}.
+              </div>
+            </div>
+          `;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Rental Request`;
+        } else {
+          indicator.className = 'availability-box avail-unavailable';
+          indicator.innerHTML = `
+            <i class="fa-solid fa-circle-exclamation" style="font-size:1.15rem; margin-top:2px;"></i>
+            <div>
+              <strong>Unavailable for Selected Dates</strong>
+              <div style="font-size:0.85rem; margin-top:2px;">
+                ${data.availableUnits > 0 ? `Only ${data.availableUnits} unit(s) free, but ${qty} requested.` : 'Fully booked by other renters during this period.'} 
+                Product remains listed — try choosing alternative dates!
+              </div>
+            </div>
+          `;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<i class="fa-solid fa-ban"></i> Unavailable for Dates`;
+        }
+      } catch (err) {
+        indicator.className = 'availability-box avail-unavailable';
+        indicator.innerHTML = `
+          <i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;"></i>
+          <div>Availability check unavailable. Please check server connection.</div>
+        `;
+      }
+    }
+
+    // Submit Customer Rental Request
+    async function submitRentalRequest() {
+      const sInput = document.getElementById('rentStartDate');
+      const eInput = document.getElementById('rentEndDate');
+      const qInput = document.getElementById('rentQuantity');
+      const addressInput = document.getElementById('deliveryAddress');
+      const submitBtn = document.getElementById('submitRequestBtn');
+
+      if (!sInput || !eInput || !qInput || !product) return;
+
+      const startDate = sInput.value;
+      const endDate = eInput.value;
+      const quantity = parseInt(qInput.value, 10) || 1;
+      const address = (addressInput ? addressInput.value.trim() : '') || 'Standard Delivery Address';
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Submitting Request...`;
+
+      try {
+        // Check session first
+        const sessionRes = await fetch(`${API_BASE_URL}/user-session`, { credentials: 'include' });
+        if (sessionRes.status === 401) {
+          const returnTo = `${window.location.pathname}${window.location.search}`;
+          window.location.href = `login.html?returnTo=${encodeURIComponent(returnTo)}`;
+          return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/rental-requests`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            product_id: product.product_id,
+            quantity: quantity,
+            rent_start: startDate,
+            rent_end: endDate,
+            address: address,
+            customer_notes: `Requested ${quantity} unit(s) from ${startDate} to ${endDate}`
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to submit rental request');
+        }
+
+        // Show Confirmation Modal
+        showConfirmModal(data.details || {
+          order_id: data.order_id,
+          product_name: product.name,
+          quantity: quantity,
+          rent_start: startDate,
+          rent_end: endDate,
+          total_amount: document.getElementById('bdTotal').textContent
+        });
+
+      } catch (err) {
+        alert(err.message || 'Could not submit rental request. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Rental Request`;
+      }
+    }
+
+    function showConfirmModal(details) {
+      const modal = document.getElementById('confirmModal');
+      const container = document.getElementById('modalDetails');
+
+      container.innerHTML = `
+        <p><strong>Request ID:</strong> #${details.order_id || 'Pending'}</p>
+        <p><strong>Product:</strong> ${escapeHtml(details.product_name || product.name)}</p>
+        <p><strong>Quantity:</strong> ${details.quantity || 1} unit(s)</p>
+        <p><strong>Rental Window:</strong> ${details.rent_start} to ${details.rent_end}</p>
+        <p><strong>Status:</strong> <span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:4px; font-weight:700;">Pending Supplier Acceptance</span></p>
+        <p><strong>Total Estimate:</strong> ₹${details.total_amount ? Number(details.total_amount).toLocaleString('en-IN') : document.getElementById('bdTotal').textContent}</p>
+      `;
+
+      modal.classList.add('active');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModal').classList.remove('active');
+      window.location.href = 'index.html';
+    }
+
+    // Add to Cart Compatibility
+    async function addToCartCompat() {
+      try {
+        const sessionRes = await fetch(`${API_BASE_URL}/user-session`, { credentials: 'include' });
+        if (sessionRes.status === 401) {
+          const returnTo = `${window.location.pathname}${window.location.search}`;
+          window.location.href = `login.html?returnTo=${encodeURIComponent(returnTo)}`;
+          return;
+        }
+
+        const sessionData = await sessionRes.json();
+        const cartKey = `rentitCart_${sessionData.user.user_id}`;
+        let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+
+        const exists = cart.find(item => item.product_id === product.product_id);
+        if (exists) return alert("This product is already in your cart.");
+
+        const sInput = document.getElementById('rentStartDate');
+        const eInput = document.getElementById('rentEndDate');
+        const qInput = document.getElementById('rentQuantity');
+
+        const startDate = sInput ? sInput.value : '';
+        const endDate = eInput ? eInput.value : '';
+        const qty = qInput ? parseInt(qInput.value, 10) || 1 : 1;
+
+        const diffTime = Math.max(0, new Date(endDate) - new Date(startDate));
+        const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+
+        cart.push({
+          product_id: product.product_id,
+          owner_id: product.owner_id,
+          name: product.name,
+          category: product.category,
+          price: product.price,
+          rentUnit: product.rentUnit,
+          image: product.image,
+          deposit: product.deposit,
+          duration: diffDays,
+          quantity: qty,
+          startDate: startDate,
+          endDate: endDate
+        });
+
+        localStorage.setItem(cartKey, JSON.stringify(cart));
+        alert("✅ Added to cart with your selected dates and quantity!");
+        window.location.href = "cart.html";
+      } catch (err) {
+        alert(err.message || 'Could not add to cart.');
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    loadProduct();
+  </script>
 </body>
 </html>

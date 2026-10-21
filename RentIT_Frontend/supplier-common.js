@@ -2,7 +2,7 @@
  * RentIT Supplier Portal - Common Utilities and Session Management
  */
 
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3001`;
+const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
 
 /**
  * Initializes supplier session check and configures common navigation elements

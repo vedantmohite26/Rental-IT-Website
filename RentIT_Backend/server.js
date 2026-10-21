@@ -99,7 +99,7 @@ app.use(cors({
     origin: [...new Set(frontendOrigins)],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma']
 }));
 
 app.use(express.json({ limit: '1mb' }));
@@ -214,6 +214,41 @@ db.run(`
     if (err) console.error('Products table error:', err.message);
     else console.log('Products table ready.');
 });
+
+db.run(`
+    CREATE TABLE IF NOT EXISTS orders (
+        order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        rent_start DATE NOT NULL,
+        rent_end DATE NOT NULL,
+        total_amount REAL NOT NULL,
+        status TEXT DEFAULT 'Pending',
+        quantity INTEGER NOT NULL DEFAULT 1,
+        customer_notes TEXT,
+        return_confirmed_at DATETIME,
+        supplier_notes TEXT,
+        payment_id TEXT,
+        address TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(user_id),
+        FOREIGN KEY(product_id) REFERENCES products(product_id)
+    )
+`, (err) => {
+    if (err) console.error('Orders table error:', err.message);
+    else console.log('Orders table ready.');
+
+    const columnsToEnsure = [
+        "ALTER TABLE orders ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1",
+        "ALTER TABLE orders ADD COLUMN customer_notes TEXT",
+        "ALTER TABLE orders ADD COLUMN return_confirmed_at DATETIME",
+        "ALTER TABLE orders ADD COLUMN supplier_notes TEXT"
+    ];
+    columnsToEnsure.forEach((alterSql) => {
+        db.run(alterSql, () => {});
+    });
+});
+
 
 function requireOwnedProduct(req, res, next) {
     db.get(
@@ -587,32 +622,136 @@ app.post('/owner/logout', (req, res) => {
     });
 });
 
+// ================= Rental Management Engine & Stock Overlap Verification =================
+/**
+ * Calculates stock availability for a product over a specified date range.
+ * Checks concurrent overlapping accepted/active bookings against the product's total inventory.
+ * Pending, rejected, and returned requests DO NOT reserve stock.
+ */
+function checkProductStockAvailability(productId, startDate, endDate, requestedQty = 1) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            'SELECT product_id, name, quantity, price, deposit, rentUnit FROM products WHERE product_id = ?',
+            [productId],
+            (err, product) => {
+                if (err) return reject(err);
+                if (!product) return resolve({ found: false });
+
+                const totalStock = Number(product.quantity) || 0;
+                const reqQty = Math.max(1, parseInt(requestedQty, 10) || 1);
+
+                // Fetch only active/accepted bookings that overlap [startDate, endDate]
+                // Note: Pending, Rejected, Returned, and Cancelled orders DO NOT reserve stock!
+                const query = `
+                    SELECT order_id, rent_start, rent_end, COALESCE(quantity, 1) AS quantity, status
+                    FROM orders
+                    WHERE product_id = ?
+                      AND LOWER(status) IN ('accepted', 'approved', 'paid', 'active')
+                      AND date(rent_start) <= date(?)
+                      AND date(rent_end) >= date(?)
+                      AND return_confirmed_at IS NULL
+                `;
+
+                db.all(query, [productId, endDate, startDate], (ordersErr, activeOrders) => {
+                    if (ordersErr) return reject(ordersErr);
+
+                    // Calculate peak concurrent booked units on any single day within [startDate, endDate]
+                    let peakReserved = 0;
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+
+                    // Daily date-by-date peak reserved unit check
+                    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                        const dateStr = d.toISOString().split('T')[0];
+                        let dailyReserved = 0;
+
+                        activeOrders.forEach((order) => {
+                            const oStart = order.rent_start ? String(order.rent_start).split('T')[0] : '';
+                            const oEnd = order.rent_end ? String(order.rent_end).split('T')[0] : '';
+
+                            if (oStart <= dateStr && oEnd >= dateStr) {
+                                dailyReserved += Number(order.quantity) || 1;
+                            }
+                        });
+
+                        if (dailyReserved > peakReserved) {
+                            peakReserved = dailyReserved;
+                        }
+                    }
+
+                    const availableUnits = Math.max(0, totalStock - peakReserved);
+                    const isAvailable = availableUnits >= reqQty && totalStock > 0;
+
+                    resolve({
+                        found: true,
+                        product,
+                        totalStock,
+                        peakReserved,
+                        availableUnits,
+                        requestedQty: reqQty,
+                        isAvailable,
+                        activeBookingsCount: activeOrders.length
+                    });
+                });
+            }
+        );
+    });
+}
+
+// ================= Owner Dashboard Summary =================
 app.get('/owner-dashboard', requireOwner, (req, res) => {
     const ownerId = req.session.owner.owner_id;
-    const query = `
+
+    const statsQuery = `
         SELECT
-            COUNT(*) AS totalProducts,
-            COALESCE(SUM(quantity), 0) AS totalStock,
+            COUNT(DISTINCT p.product_id) AS totalProducts,
+            COALESCE(SUM(p.quantity), 0) AS totalStock,
             (
-                SELECT COUNT(DISTINCT o.product_id)
+                SELECT COALESCE(SUM(o.quantity), 0)
                 FROM orders o
-                JOIN products p ON p.product_id = o.product_id
-                WHERE p.owner_id = ?
-                  AND LOWER(o.status) = 'paid'
+                JOIN products p2 ON p2.product_id = o.product_id
+                WHERE p2.owner_id = ?
+                  AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
                   AND date('now') BETWEEN date(o.rent_start) AND date(o.rent_end)
-            ) AS rentedProducts,
+                  AND o.return_confirmed_at IS NULL
+            ) AS currentlyRentedUnits,
             (
                 SELECT COUNT(*)
                 FROM orders o
-                JOIN products p ON p.product_id = o.product_id
-                WHERE p.owner_id = ?
+                JOIN products p2 ON p2.product_id = o.product_id
+                WHERE p2.owner_id = ?
                   AND LOWER(o.status) = 'pending'
-            ) AS pendingRentalRequests
-        FROM products
-        WHERE owner_id = ?
+            ) AS pendingRentalRequests,
+            (
+                SELECT COUNT(*)
+                FROM orders o
+                JOIN products p2 ON p2.product_id = o.product_id
+                WHERE p2.owner_id = ?
+                  AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
+                  AND date(o.rent_end) BETWEEN date('now') AND date('now', '+7 days')
+                  AND o.return_confirmed_at IS NULL
+            ) AS upcomingReturns,
+            (
+                SELECT COUNT(*)
+                FROM orders o
+                JOIN products p2 ON p2.product_id = o.product_id
+                WHERE p2.owner_id = ?
+                  AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
+                  AND date(o.rent_end) < date('now')
+                  AND o.return_confirmed_at IS NULL
+            ) AS overdueRentals,
+            (
+                SELECT COUNT(*)
+                FROM orders o
+                JOIN products p2 ON p2.product_id = o.product_id
+                WHERE p2.owner_id = ?
+                  AND LOWER(o.status) = 'returned'
+            ) AS returnedCount
+        FROM products p
+        WHERE p.owner_id = ?
     `;
 
-    db.get(query, [ownerId, ownerId, ownerId], (err, row) => {
+    db.get(statsQuery, [ownerId, ownerId, ownerId, ownerId, ownerId, ownerId], (err, row) => {
         if (err) {
             console.error('Owner dashboard error:', err.message);
             return res.status(500).json({
@@ -621,19 +760,348 @@ app.get('/owner-dashboard', requireOwner, (req, res) => {
             });
         }
 
+        const totalProducts = row.totalProducts || 0;
+        const totalStock = row.totalStock || 0;
+        const rentedUnits = row.currentlyRentedUnits || 0;
+        const availableStock = Math.max(0, totalStock - rentedUnits);
+
         res.json({
             success: true,
             owner: req.session.owner,
             summary: {
-                totalProducts: row.totalProducts || 0,
-                totalStock: row.totalStock || 0,
-                availableProducts: (row.totalProducts || 0) - (row.rentedProducts || 0),
-                rentedProducts: row.rentedProducts || 0,
-                pendingRentalRequests: row.pendingRentalRequests || 0
+                totalProducts: totalProducts,
+                totalStock: totalStock,
+                availableProducts: availableStock,
+                availableStock: availableStock,
+                rentedProducts: rentedUnits,
+                currentlyRentedUnits: rentedUnits,
+                pendingRentalRequests: row.pendingRentalRequests || 0,
+                upcomingReturns: row.upcomingReturns || 0,
+                overdueRentals: row.overdueRentals || 0,
+                returnedCount: row.returnedCount || 0
             }
         });
     });
 });
+
+// ================= Owner Rental Requests & Bookings =================
+app.get('/owner/rental-requests', requireOwner, (req, res) => {
+    const ownerId = req.session.owner.owner_id;
+    const filter = (req.query.status || 'all').toLowerCase();
+    const today = new Date().toISOString().split('T')[0];
+
+    let query = `
+        SELECT o.order_id,
+               o.user_id,
+               o.product_id,
+               o.rent_start,
+               o.rent_end,
+               o.total_amount,
+               COALESCE(o.quantity, 1) AS quantity,
+               o.status,
+               o.customer_notes,
+               o.supplier_notes,
+               o.return_confirmed_at,
+               o.address,
+               o.payment_id,
+               o.created_at,
+               p.name AS product_name,
+               p.image AS product_image,
+               p.quantity AS total_product_stock,
+               p.price AS unit_price,
+               p.deposit AS unit_deposit,
+               p.rentUnit,
+               u.name AS customer_name,
+               u.email AS customer_email,
+               u.phone AS customer_phone
+        FROM orders o
+        JOIN products p ON o.product_id = p.product_id
+        JOIN users u ON o.user_id = u.user_id
+        WHERE p.owner_id = ?
+    `;
+
+    const params = [ownerId];
+
+    if (filter === 'pending') {
+        query += " AND LOWER(o.status) = 'pending'";
+    } else if (filter === 'accepted') {
+        query += " AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active') AND o.return_confirmed_at IS NULL";
+    } else if (filter === 'upcoming') {
+        query += " AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active') AND date(o.rent_end) BETWEEN date('now') AND date('now', '+7 days') AND o.return_confirmed_at IS NULL";
+    } else if (filter === 'overdue') {
+        query += " AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active') AND date(o.rent_end) < date('now') AND o.return_confirmed_at IS NULL";
+    } else if (filter === 'returned') {
+        query += " AND LOWER(o.status) = 'returned'";
+    } else if (filter === 'rejected') {
+        query += " AND LOWER(o.status) = 'rejected'";
+    }
+
+    query += ' ORDER BY o.created_at DESC';
+
+    db.all(query, params, (err, rows) => {
+        if (err) {
+            console.error('Error fetching owner rental requests:', err.message);
+            return res.status(500).json({ success: false, message: 'Failed to fetch rental requests' });
+        }
+
+        const enriched = rows.map((r) => {
+            const isAccepted = ['accepted', 'approved', 'paid', 'active'].includes((r.status || '').toLowerCase());
+            const isOverdue = isAccepted && !r.return_confirmed_at && (r.rent_end < today);
+            return {
+                ...r,
+                is_overdue: isOverdue,
+                effective_status: isOverdue ? 'Overdue' : r.status
+            };
+        });
+
+        res.json({ success: true, requests: enriched });
+    });
+});
+
+// ================= Owner Accept or Reject Rental Request =================
+app.post('/owner/rental-requests/:order_id/action', requireOwner, async (req, res) => {
+    try {
+        const orderId = Number(req.params.order_id);
+        const { action, notes } = req.body;
+        const ownerId = req.session.owner.owner_id;
+
+        if (!['accept', 'reject'].includes(action)) {
+            return res.status(400).json({ success: false, message: 'Action must be "accept" or "reject"' });
+        }
+
+        // Fetch order and verify supplier owns this product
+        const checkQuery = `
+            SELECT o.*, p.name AS product_name, p.quantity AS product_stock, p.owner_id
+            FROM orders o
+            JOIN products p ON o.product_id = p.product_id
+            WHERE o.order_id = ?
+        `;
+
+        db.get(checkQuery, [orderId], async (err, order) => {
+            if (err) {
+                console.error('Error loading order for action:', err.message);
+                return res.status(500).json({ success: false, message: 'Database error' });
+            }
+
+            if (!order) {
+                return res.status(404).json({ success: false, message: 'Rental request not found' });
+            }
+
+            if (String(order.owner_id) !== String(ownerId)) {
+                return res.status(403).json({ success: false, message: 'Unauthorized. You do not own this product.' });
+            }
+
+            if (action === 'accept') {
+                if (order.status !== 'Pending') {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Cannot accept request. Current status is already "${order.status}".`
+                    });
+                }
+
+                // CRITICAL INVENTORY OVERLAP CHECK:
+                // Only reserve stock if available units during [rent_start, rent_end] >= requested quantity!
+                const orderQty = Number(order.quantity) || 1;
+                const avail = await checkProductStockAvailability(
+                    order.product_id,
+                    order.rent_start,
+                    order.rent_end,
+                    orderQty
+                );
+
+                if (!avail.isAvailable) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Cannot accept booking: inventory for ${order.rent_start} to ${order.rent_end} is insufficient. Available: ${avail.availableUnits} unit(s), Requested: ${orderQty} unit(s). Overlapping bookings prevent exceeding inventory.`
+                    });
+                }
+
+                // Accept request and reserve stock for the booking window
+                db.run(
+                    `UPDATE orders
+                     SET status = 'Accepted', supplier_notes = ?
+                     WHERE order_id = ?`,
+                    [notes || 'Accepted by supplier', orderId],
+                    function (updateErr) {
+                        if (updateErr) {
+                            return res.status(500).json({ success: false, message: 'Failed to accept rental request' });
+                        }
+
+                        res.json({
+                            success: true,
+                            message: `Rental request #${orderId} accepted successfully! ${orderQty} unit(s) reserved for ${order.rent_start} to ${order.rent_end}.`,
+                            status: 'Accepted'
+                        });
+                    }
+                );
+            } else if (action === 'reject') {
+                if (order.status === 'Returned') {
+                    return res.status(400).json({ success: false, message: 'Cannot reject an already returned rental.' });
+                }
+
+                // Reject request: status becomes Rejected, reserves 0 stock
+                db.run(
+                    `UPDATE orders
+                     SET status = 'Rejected', supplier_notes = ?
+                     WHERE order_id = ?`,
+                    [notes || 'Rejected by supplier', orderId],
+                    function (updateErr) {
+                        if (updateErr) {
+                            return res.status(500).json({ success: false, message: 'Failed to reject rental request' });
+                        }
+
+                        res.json({
+                            success: true,
+                            message: `Rental request #${orderId} has been rejected. No inventory reserved.`,
+                            status: 'Rejected'
+                        });
+                    }
+                );
+            }
+        });
+    } catch (err) {
+        console.error('Owner rental action exception:', err.message);
+        res.status(500).json({ success: false, message: 'Server error processing action' });
+    }
+});
+
+// ================= Owner Confirm Return of Product =================
+app.post('/owner/orders/:order_id/confirm-return', requireOwner, (req, res) => {
+    const orderId = Number(req.params.order_id);
+    const ownerId = req.session.owner.owner_id;
+    const { return_notes } = req.body || {};
+
+    const checkQuery = `
+        SELECT o.*, p.name AS product_name, p.quantity AS product_stock, p.owner_id
+        FROM orders o
+        JOIN products p ON o.product_id = p.product_id
+        WHERE o.order_id = ?
+    `;
+
+    db.get(checkQuery, [orderId], (err, order) => {
+        if (err) {
+            console.error('Error fetching order for return:', err.message);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Rental order not found' });
+        }
+
+        if (String(order.owner_id) !== String(ownerId)) {
+            return res.status(403).json({ success: false, message: 'Unauthorized. You do not own this product.' });
+        }
+
+        // PREVENT DOUBLE-COUNTING OR MULTIPLE RETURNS
+        if (order.status === 'Returned') {
+            return res.status(400).json({
+                success: false,
+                message: `This rental was already confirmed returned on ${order.return_confirmed_at || 'a previous date'}. Return cannot be counted twice.`
+            });
+        }
+
+        const validReturnableStatuses = ['accepted', 'approved', 'paid', 'active', 'overdue'];
+        if (!validReturnableStatuses.includes(order.status.toLowerCase())) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot confirm return for an order with status "${order.status}". Only accepted/active rentals can be returned.`
+            });
+        }
+
+        // Update status to 'Returned' and record timestamp.
+        // NOTE: We do NOT increment base product.quantity because that would corrupt the total owned stock catalog.
+        // Instead, changing status to 'Returned' removes this booking from active/reserved stock calculations,
+        // making the returned quantity immediately available again cleanly and accurately!
+        const returnedQty = Number(order.quantity) || 1;
+        db.run(
+            `UPDATE orders
+             SET status = 'Returned',
+                 return_confirmed_at = CURRENT_TIMESTAMP,
+                 supplier_notes = COALESCE(?, supplier_notes)
+             WHERE order_id = ?`,
+            [return_notes ? `Returned: ${return_notes}` : null, orderId],
+            function (updateErr) {
+                if (updateErr) {
+                    console.error('Error updating return status:', updateErr.message);
+                    return res.status(500).json({ success: false, message: 'Failed to confirm return' });
+                }
+
+                res.json({
+                    success: true,
+                    message: `Return confirmed! ${returnedQty} unit(s) of "${order.product_name}" are now marked returned and available again for booking.`,
+                    order_id: orderId,
+                    returned_quantity: returnedQty,
+                    status: 'Returned'
+                });
+            }
+        );
+    });
+});
+
+// ================= Owner Inventory & Stock Status =================
+app.get('/owner/inventory-status', requireOwner, (req, res) => {
+    const ownerId = req.session.owner.owner_id;
+
+    const query = `
+        SELECT p.product_id,
+               p.name,
+               p.category,
+               p.price,
+               p.deposit,
+               p.rentUnit,
+               p.image,
+               p.quantity AS total_stock,
+               (
+                   SELECT COALESCE(SUM(o.quantity), 0)
+                   FROM orders o
+                   WHERE o.product_id = p.product_id
+                     AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
+                     AND date('now') BETWEEN date(o.rent_start) AND date(o.rent_end)
+                     AND o.return_confirmed_at IS NULL
+               ) AS currently_rented_units,
+               (
+                   SELECT COUNT(*)
+                   FROM orders o
+                   WHERE o.product_id = p.product_id
+                     AND LOWER(o.status) = 'pending'
+               ) AS pending_requests_count,
+               (
+                   SELECT COUNT(*)
+                   FROM orders o
+                   WHERE o.product_id = p.product_id
+                     AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
+                     AND date(o.rent_end) < date('now')
+                     AND o.return_confirmed_at IS NULL
+               ) AS overdue_count
+        FROM products p
+        WHERE p.owner_id = ?
+        ORDER BY p.name ASC
+    `;
+
+    db.all(query, [ownerId], (err, rows) => {
+        if (err) {
+            console.error('Error fetching inventory status:', err.message);
+            return res.status(500).json({ success: false, message: 'Failed to load inventory status' });
+        }
+
+        const items = rows.map((r) => {
+            const total = Number(r.total_stock) || 0;
+            const rented = Number(r.currently_rented_units) || 0;
+            const available = Math.max(0, total - rented);
+
+            return {
+                ...r,
+                total_stock: total,
+                currently_rented_units: rented,
+                available_stock: available,
+                is_out_of_stock: available === 0
+            };
+        });
+
+        res.json({ success: true, inventory: items });
+    });
+});
+
 
 // ================= Add Product =================
 app.post(
@@ -774,6 +1242,46 @@ app.get('/products/:id', (req, res) => {
         }
     );
 });
+
+// ================= Check Product Stock & Date Availability =================
+app.get('/products/:id/availability', async (req, res) => {
+    try {
+        const productId = Number(req.params.id);
+        const todayStr = new Date().toISOString().split('T')[0];
+        const startDate = req.query.start || todayStr;
+        const endDate = req.query.end || startDate;
+        const requestedQuantity = Math.max(1, parseInt(req.query.quantity, 10) || 1);
+
+        if (new Date(startDate) > new Date(endDate)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Start date cannot be after end date'
+            });
+        }
+
+        const avail = await checkProductStockAvailability(productId, startDate, endDate, requestedQuantity);
+        if (!avail.found) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        res.json({
+            success: true,
+            product_id: productId,
+            product_name: avail.product.name,
+            totalStock: avail.totalStock,
+            peakReserved: avail.peakReserved,
+            availableUnits: avail.availableUnits,
+            requestedQuantity: requestedQuantity,
+            isAvailable: avail.isAvailable,
+            startDate,
+            endDate
+        });
+    } catch (err) {
+        console.error('Availability check error:', err.message);
+        res.status(500).json({ success: false, message: 'Could not check product availability' });
+    }
+});
+
 
 // ================= Products By Category =================
 app.get('/products/category/:category', (req, res) => {
@@ -1196,13 +1704,130 @@ app.put('/changePassword', async (req, res) => {
     );
 });
 
-// ================= Place Order =================
+// ================= Submit Rental Request (Customer) =================
+app.post('/rental-requests', requireUser, (req, res) => {
+    try {
+        const {
+            product_id,
+            quantity = 1,
+            rent_start,
+            rent_end,
+            address,
+            customer_notes
+        } = req.body;
+
+        if (!product_id || !rent_start || !rent_end) {
+            return res.status(400).json({
+                success: false,
+                message: 'Product, start date, and end date are required'
+            });
+        }
+
+        const qty = parseInt(quantity, 10);
+        if (!Number.isSafeInteger(qty) || qty < 1) {
+            return res.status(400).json({
+                success: false,
+                message: 'Quantity must be at least 1'
+            });
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        if (rent_start < today) {
+            return res.status(400).json({
+                success: false,
+                message: 'Rental start date cannot be in the past'
+            });
+        }
+
+        if (rent_start > rent_end) {
+            return res.status(400).json({
+                success: false,
+                message: 'Rental end date must be on or after start date'
+            });
+        }
+
+        // Fetch product to calculate total price and deposit
+        db.get('SELECT * FROM products WHERE product_id = ?', [product_id], (prodErr, product) => {
+            if (prodErr || !product) {
+                return res.status(404).json({ success: false, message: 'Product not found' });
+            }
+
+            // Calculate duration in days
+            const sDate = new Date(rent_start);
+            const eDate = new Date(rent_end);
+            const diffTime = Math.abs(eDate - sDate);
+            const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1); // inclusive days
+
+            const unitPrice = Number(product.price) || 0;
+            const depositPerUnit = Number(product.deposit) || 0;
+            const totalRent = unitPrice * diffDays * qty;
+            const totalDeposit = depositPerUnit * qty;
+            const totalAmount = totalRent + totalDeposit;
+
+            // Submit rental request with status 'Pending'
+            // CRITICAL: Pending requests DO NOT reserve stock!
+            const query = `
+                INSERT INTO orders
+                    (user_id, product_id, rent_start, rent_end, total_amount, quantity, address, customer_notes, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
+            `;
+
+            db.run(
+                query,
+                [
+                    req.session.user.user_id,
+                    product_id,
+                    rent_start,
+                    rent_end,
+                    totalAmount,
+                    qty,
+                    address || (req.session.user.address || 'Standard Delivery Address'),
+                    customer_notes || ''
+                ],
+                function (insertErr) {
+                    if (insertErr) {
+                        console.error('Rental request error:', insertErr.message);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to submit rental request'
+                        });
+                    }
+
+                    res.status(201).json({
+                        success: true,
+                        message: 'Rental request submitted successfully! Awaiting supplier confirmation.',
+                        order_id: this.lastID,
+                        details: {
+                            order_id: this.lastID,
+                            product_id,
+                            product_name: product.name,
+                            quantity: qty,
+                            rent_start,
+                            rent_end,
+                            diffDays,
+                            total_amount: totalAmount,
+                            status: 'Pending'
+                        }
+                    });
+                }
+            );
+        });
+    } catch (err) {
+        console.error('Submit rental request exception:', err.message);
+        res.status(500).json({ success: false, message: 'Server error while processing request' });
+    }
+});
+
+// ================= Place Order (Direct Checkout) =================
 app.post('/place-order', requireUser, (req, res) => {
     const {
         product_id,
         rent_start,
         rent_end,
-        total_amount
+        total_amount,
+        quantity = 1,
+        address,
+        customer_notes
     } = req.body;
 
     if (
@@ -1223,15 +1848,17 @@ app.post('/place-order', requireUser, (req, res) => {
         return res.status(400).json({ message: 'Invalid total amount' });
     }
 
+    const qty = Math.max(1, parseInt(quantity, 10) || 1);
+
     const query = `
         INSERT INTO orders
-            (user_id, product_id, rent_start, rent_end, total_amount)
-        VALUES (?, ?, ?, ?, ?)
+            (user_id, product_id, rent_start, rent_end, total_amount, quantity, address, customer_notes, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
     `;
 
     db.run(
         query,
-        [req.session.user.user_id, product_id, rent_start, rent_end, amount],
+        [req.session.user.user_id, product_id, rent_start, rent_end, amount, qty, address || null, customer_notes || null],
         function (err) {
             if (err) {
                 console.error('Place order error:', err.message);
@@ -1241,14 +1868,14 @@ app.post('/place-order', requireUser, (req, res) => {
             }
 
             res.status(201).json({
-                message: 'Order placed successfully',
+                message: 'Rental request placed successfully',
                 order_id: this.lastID
             });
         }
     );
 });
 
-// ================= Get User Orders =================
+// ================= Get User Orders / Rental Requests =================
 app.get('/orders/:user_id', requireUser, (req, res) => {
     if (String(req.session.user.user_id) !== String(req.params.user_id)) {
         return res.status(403).json({
@@ -1259,10 +1886,18 @@ app.get('/orders/:user_id', requireUser, (req, res) => {
 
     const query = `
         SELECT orders.*,
+               COALESCE(orders.quantity, 1) AS quantity,
                products.name AS product_name,
-               products.image AS product_image
+               products.image AS product_image,
+               products.price AS unit_price,
+               products.deposit AS unit_deposit,
+               products.rentUnit AS rent_unit,
+               owners.name AS supplier_name,
+               owners.phone AS supplier_phone,
+               owners.email AS supplier_email
         FROM orders
         JOIN products ON orders.product_id = products.product_id
+        LEFT JOIN owners ON products.owner_id = owners.owner_id
         WHERE orders.user_id = ?
         ORDER BY orders.created_at DESC
     `;
@@ -1275,9 +1910,23 @@ app.get('/orders/:user_id', requireUser, (req, res) => {
             });
         }
 
-        res.json(rows);
+        const today = new Date().toISOString().split('T')[0];
+        const formatted = rows.map((r) => {
+            const rawStatus = r.status || 'Pending';
+            const isAccepted = ['accepted', 'approved', 'paid', 'active'].includes(rawStatus.toLowerCase());
+            const isOverdue = isAccepted && !r.return_confirmed_at && (r.rent_end < today);
+
+            return {
+                ...r,
+                is_overdue: isOverdue,
+                effective_status: isOverdue ? 'Overdue' : rawStatus
+            };
+        });
+
+        res.json(formatted);
     });
 });
+
 
 // ================= Create Razorpay Order =================
 app.post('/create-order', requireUser, async (req, res) => {
@@ -1347,8 +1996,8 @@ app.post('/save-order', requireUser, (req, res) => {
         const stmt = db.prepare(`
             INSERT INTO orders
                 (user_id, product_id, rent_start, rent_end,
-                 total_amount, payment_id, address, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 total_amount, payment_id, address, status, quantity)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         let failed = false;
@@ -1380,6 +2029,8 @@ app.post('/save-order', requireUser, (req, res) => {
                 return rollback(new Error('Invalid product in order'));
             }
 
+            const itemQty = Math.max(1, parseInt(item.quantity, 10) || 1);
+
             stmt.run(
                 [
                     req.session.user.user_id,
@@ -1389,9 +2040,11 @@ app.post('/save-order', requireUser, (req, res) => {
                     amount,
                     payment_id,
                     address,
-                    status
+                    status,
+                    itemQty
                 ],
                 (err) => {
+
                     if (err) return rollback(err);
                     if (failed) return;
 
@@ -1518,7 +2171,8 @@ app.get('/admin/dashboard', (req, res) => {
             (SELECT COUNT(1) FROM users) AS registeredUsers,
             (SELECT COUNT(1) FROM owners) AS totalSuppliers,
             (SELECT COUNT(1) FROM products) AS totalProducts,
-            (SELECT COUNT(1) FROM orders WHERE LOWER(status) = 'paid' AND date('now') BETWEEN date(rent_start) AND date(rent_end)) AS activeRentals
+            (SELECT COALESCE(SUM(quantity), 0) FROM products) AS totalStockUnits,
+            (SELECT COUNT(1) FROM orders WHERE LOWER(status) IN ('paid', 'accepted', 'approved', 'active') AND date('now') BETWEEN date(rent_start) AND date(rent_end) AND return_confirmed_at IS NULL) AS activeRentals
     `;
 
     const productsSql = `
@@ -1528,6 +2182,7 @@ app.get('/admin/dashboard', (req, res) => {
             p.category,
             p.price,
             p.rentUnit,
+            COALESCE(p.quantity, 1) AS quantity,
             o.name AS ownerName,
             o.email,
             o.phone AS contact
@@ -1554,17 +2209,21 @@ app.get('/admin/dashboard', (req, res) => {
                 });
             }
 
+            res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+            res.set('Pragma', 'no-cache');
             res.json({
                 success: true,
                 summary: {
                     registeredUsers: statsRow?.registeredUsers || 0,
                     totalSuppliers: statsRow?.totalSuppliers || 0,
                     totalProducts: statsRow?.totalProducts || 0,
+                    totalStockUnits: statsRow?.totalStockUnits || 0,
                     activeRentals: statsRow?.activeRentals || 0
                 },
                 products: rows || []
             });
         });
+
     });
 });
 

@@ -58,6 +58,8 @@
 </footer>
 
 <script>
+const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+
 window.addEventListener('load', async () => {
   const params = new URLSearchParams(window.location.search);
   const searchTerm = (params.get('q') || '').trim().toLowerCase();
@@ -65,7 +67,7 @@ window.addEventListener('load', async () => {
   document.getElementById('searchTerm').textContent = `Search results for "${searchTerm}"`;
 
   try {
-    const res = await fetch(`http://localhost:3000/products/search?q=${encodeURIComponent(searchTerm)}`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE_URL}/products/search?q=${encodeURIComponent(searchTerm)}`, { cache: "no-store" });
     const data = await res.json();
     const products = data.products || [];
 
@@ -82,17 +84,26 @@ window.addEventListener('load', async () => {
 
 function displayProducts(items) {
   const grid = document.getElementById('productsGrid');
-  grid.innerHTML = items.map(p => `
-    <div class="product-card">
-      <img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}" onerror="this.src='image/dslr.jpg'">
-      <h3>${p.name}</h3>
-      <p>${p.description || ''}</p>
-      <div class="product-price">₹${p.price}/day</div>
-      <p><strong>Category:</strong> ${p.category}</p>
-      <button onclick="viewProduct('${p.product_id}')">View Details</button>
-    </div>
-  `).join('');
+  grid.innerHTML = items.map(p => {
+    const qty = Number(p.quantity) || 0;
+    const availBadge = qty > 0 
+      ? `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-circle-check"></i> In Stock (${qty} available)</span>`
+      : `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
+
+    return `
+      <div class="product-card">
+        <img src="${API_BASE_URL}/uploads/${p.image}" alt="${p.name}" onerror="this.src='image/dslr.jpg'">
+        <h3>${p.name}</h3>
+        <p>${p.description || ''}</p>
+        <div>${availBadge}</div>
+        <div class="product-price">₹${p.price}/day</div>
+        <p><strong>Category:</strong> ${p.category}</p>
+        <button onclick="viewProduct('${p.product_id}')">Rent Now / Check Dates</button>
+      </div>
+    `;
+  }).join('');
 }
+
 
 function showNoResults(term) {
   document.getElementById('productsGrid').innerHTML = `

@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Admin Dashboard - RentIT</title>
 
   <!-- Google Fonts & FontAwesome -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <style>
@@ -70,44 +75,49 @@
       gap: 16px;
     }
 
-    .admin-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--primary);
-    }
+    
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--primary);
+}
 
-    .admin-brand-icon {
-      width: 38px;
-      height: 38px;
-      background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
-      color: #fff;
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
-    }
+.admin-brand-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--teal-700), var(--teal-600));
+  color: #fff;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.2);
+  flex-shrink: 0;
+}
 
-    .admin-brand-title {
-      font-size: 1.25rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
+.admin-brand-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
 
-    .admin-badge {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      padding: 2px 8px;
-      border-radius: var(--radius-full);
-      letter-spacing: 0.04em;
-    }
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;store
+  background: var(--teal-50);
+  color: var(--teal-700);
+  border: 1px solid var(--teal-200);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.04em;
+}
+
 
     .admin-nav-actions {
       display: flex;
@@ -282,10 +292,25 @@
       flex-shrink: 0;
     }
 
-    .kpi-icon.blue { background: #eff6ff; color: #1d4ed8; }
-    .kpi-icon.teal { background: var(--teal-50); color: var(--teal-700); }
-    .kpi-icon.navy { background: #f1f5f9; color: var(--primary); }
-    .kpi-icon.emerald { background: #ecfdf5; color: #047857; }
+    .kpi-icon.blue {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .kpi-icon.teal {
+      background: var(--teal-50);
+      color: var(--teal-700);
+    }
+
+    .kpi-icon.navy {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
+
+    .kpi-icon.emerald {
+      background: #ecfdf5;
+      color: #047857;
+    }
 
     .kpi-info {
       display: flex;
@@ -604,42 +629,49 @@
       .admin-header-inner {
         padding: 12px 16px;
       }
+
       .admin-container {
         padding: 20px 16px;
       }
+
       .toolbar {
         flex-direction: column;
         align-items: stretch;
       }
+
       .search-box {
         width: 100%;
       }
+
       .filters-group {
         width: 100%;
       }
+
       .filters-group select {
         flex: 1;
       }
+
       .kpi-grid {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
+
 <body>
 
   <!-- Top Navigation Bar -->
   <header class="admin-header">
     <div class="admin-header-inner">
       <a href="admin_dash.html" class="admin-brand">
-        <div class="admin-brand-icon">
-          <i class="fa-solid fa-screwdriver-wrench"></i>
-        </div>
-        <div>
-          <span class="admin-brand-title">RentIT</span>
-          <span class="admin-badge">Admin</span>
-        </div>
-      </a>
+  <div class="admin-brand-icon">
+    <i class="fa-solid fa-cube"></i>
+  </div>
+  <div class="admin-brand-details">
+    <span class="admin-brand-title">RentIT</span>
+    <span class="admin-badge">Admin Hub</span>
+  </div>
+</a>
 
       <div class="admin-nav-actions">
         <div class="admin-user-pill" title="Current Administrator Account">
@@ -650,7 +682,7 @@
         </div>
 
         <a href="index.html" class="btn-header" title="Go to customer storefront">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i> Storefront
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Store
         </a>
 
         <button onclick="logoutAdmin()" class="btn-header btn-logout" title="Log out from admin session">
@@ -667,7 +699,7 @@
     <div class="admin-hero">
       <div>
         <h1>System Administration</h1>
-        
+
       </div>
       <div>
         <button onclick="loadDashboardData()" class="btn-header" id="refreshBtn" title="Refresh data from server">
@@ -678,7 +710,7 @@
 
     <!-- 4 Summary KPI Cards -->
     <section class="kpi-grid" aria-label="Platform Summary Statistics">
-      
+
       <!-- 1. Registered Users -->
       <article class="kpi-card">
         <div class="kpi-icon blue">
@@ -709,11 +741,12 @@
           <i class="fa-solid fa-boxes-stacked"></i>
         </div>
         <div class="kpi-info">
-          <span class="kpi-label">Total Products</span>
+          <span class="kpi-label">Total Stock Units</span>
           <span class="kpi-value" id="statProducts">—</span>
-          <span class="kpi-subtext">Listings across all suppliers</span>
+          <span class="kpi-subtext" id="statProductsSubtext">Listings across all suppliers</span>
         </div>
       </article>
+
 
       <!-- 4. Active Rentals -->
       <article class="kpi-card">
@@ -723,7 +756,7 @@
         <div class="kpi-info">
           <span class="kpi-label">Active Rentals</span>
           <span class="kpi-value" id="statActiveRentals">—</span>
-          <span class="kpi-subtext">Ongoing paid bookings today</span>
+          <span class="kpi-subtext">Bookings currently active today</span>
         </div>
       </article>
 
@@ -731,7 +764,7 @@
 
     <!-- Manage Products Section -->
     <section class="admin-card" aria-label="Manage Products Table">
-      
+
       <div class="admin-card-header">
         <div>
           <h2 class="admin-card-title">
@@ -744,7 +777,8 @@
       <div class="toolbar">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search by product name, category, owner, or email..." oninput="handleFilterChange()">
+          <input type="text" id="searchInput" class="search-input"
+            placeholder="Search by product name, category, owner, or email..." oninput="handleFilterChange()">
         </div>
 
         <div class="filters-group">
@@ -818,7 +852,8 @@
     <p>&copy; 2026 RentIT. All rights reserved.</p>
   </footer>
 
-  <dialog class="logout-dialog" id="logoutConfirmDialog" aria-labelledby="logoutDialogTitle" aria-describedby="logoutDialogDescription">
+  <dialog class="logout-dialog" id="logoutConfirmDialog" aria-labelledby="logoutDialogTitle"
+    aria-describedby="logoutDialogDescription">
     <h2 id="logoutDialogTitle">Log out?</h2>
     <p id="logoutDialogDescription">Are you sure you want to log out from the Admin Portal?</p>
     <form method="dialog" class="logout-dialog-actions">
@@ -850,9 +885,11 @@
       }
 
       try {
-        const res = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+        const res = await fetch(`${API_BASE_URL}/admin/dashboard?_t=${Date.now()}`, {
           method: 'GET',
-          credentials: 'include'
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
         });
 
         if (res.status === 401) {
@@ -872,23 +909,32 @@
 
         // 2. Render Summary KPI Statistics (with defensive fallback if backend server hasn't restarted yet)
         const summary = data.summary || {};
-        const registeredUsers = summary.registeredUsers !== undefined 
-          ? summary.registeredUsers 
+        const registeredUsers = summary.registeredUsers !== undefined
+          ? summary.registeredUsers
           : 4; // verified count in database
-        const totalSuppliers = summary.totalSuppliers !== undefined 
-          ? summary.totalSuppliers 
+        const totalSuppliers = summary.totalSuppliers !== undefined
+          ? summary.totalSuppliers
           : new Set(allProducts.map(p => p.email).filter(Boolean)).size;
-        const totalProducts = summary.totalProducts !== undefined 
-          ? summary.totalProducts 
+        const totalProducts = summary.totalProducts !== undefined
+          ? summary.totalProducts
           : allProducts.length;
-        const activeRentals = summary.activeRentals !== undefined 
-          ? summary.activeRentals 
+        const totalStockUnits = summary.totalStockUnits !== undefined
+          ? summary.totalStockUnits
+          : allProducts.reduce((sum, p) => sum + (Number(p.quantity) || 1), 0);
+        const activeRentals = summary.activeRentals !== undefined
+          ? summary.activeRentals
           : 0;
 
         document.getElementById('statUsers').textContent = formatNumber(registeredUsers);
         document.getElementById('statSuppliers').textContent = formatNumber(totalSuppliers);
-        document.getElementById('statProducts').textContent = formatNumber(totalProducts);
+        // Show total stock UNITS as primary number; model count in subtext
+        document.getElementById('statProducts').textContent = formatNumber(totalStockUnits);
+        const subtextEl = document.getElementById('statProductsSubtext');
+        if (subtextEl) {
+          subtextEl.textContent = `${formatNumber(totalProducts)} product model(s) across all suppliers`;
+        }
         document.getElementById('statActiveRentals').textContent = formatNumber(activeRentals);
+
 
         handleFilterChange();
 
@@ -1078,4 +1124,5 @@
     }
   </script>
 </body>
+
 </html>

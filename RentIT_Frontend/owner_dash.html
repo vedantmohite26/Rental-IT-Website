@@ -3,11 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supplier Dashboard - RentIT</title>
+  <title>Supplier Rental Management Hub - RentIT</title>
 
   <!-- FontAwesome Icons & Design System -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="supplier.css">
+
+  <style>
+    /* Tabbed Interface Styling */
+    .dash-tabs-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--border-light);
+      padding-bottom: 0px;
+      overflow-x: auto;
+    }
+    .dash-tab-btn {
+      background: none;
+      border: none;
+      padding: 14px 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      transition: color 0.2s;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+    .dash-tab-btn:hover { color: var(--primary); }
+    .dash-tab-btn.active {
+      color: var(--teal-700);
+      border-bottom-color: var(--teal-600);
+    }
+    .tab-counter {
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+    .counter-amber { background: #fef3c7; color: #b45309; }
+    .counter-red { background: #fee2e2; color: #dc2626; }
+    .counter-teal { background: #ccfbf1; color: #0f766e; }
+    .counter-neutral { background: #e2e8f0; color: #475569; }
+
+    /* Action Buttons */
+    .btn-action-accept {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-action-accept:hover { background: #047857; }
+
+    .btn-action-reject {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-action-reject:hover { background: #b91c1c; }
+
+    .btn-action-return {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-action-return:hover { background: #4338ca; }
+
+    /* Custom Confirmation Modal */
+    .sup-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .sup-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sup-modal-box {
+      background: white;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25);
+    }
+    .sup-modal-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  </style>
 </head>
 <body>
 
@@ -18,7 +147,7 @@
         <div class="sup-brand-logo"><i class="fa-solid fa-cube"></i></div>
         <div>
           <span class="sup-brand-text">RentIT</span>
-          <span class="sup-brand-badge">Supplier</span>
+          <span class="sup-brand-badge">Supplier Hub</span>
         </div>
       </a>
 
@@ -28,7 +157,7 @@
 
       <nav class="sup-nav" id="supNav">
         <a href="owner_dash.html" class="sup-nav-link active" data-page="dashboard">
-          <i class="fa-solid fa-chart-pie"></i> Dashboard
+          <i class="fa-solid fa-chart-pie"></i> Rental Hub
         </a>
         <a href="manage_prod.html" class="sup-nav-link" data-page="manage">
           <i class="fa-solid fa-boxes-stacked"></i> Manage Products
@@ -37,7 +166,7 @@
           <i class="fa-solid fa-circle-plus"></i> Add Product
         </a>
         <a href="index.html" class="sup-nav-link" title="Go to customer storefront">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i> Storefront
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Store
         </a>
       </nav>
 
@@ -60,26 +189,26 @@
     <!-- Welcome Hero Banner -->
     <section class="sup-welcome-banner">
       <div class="sup-welcome-text">
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
           <h1 id="welcomeHeading">Welcome back</h1>
           <span class="sup-badge sup-badge-teal">
-            <i class="fa-solid fa-shield-halved"></i> Verified Supplier
+            <i class="fa-solid fa-shield-halved"></i> Supplier
           </span>
         </div>
-
+        
       </div>
       <div class="sup-banner-actions">
         <a href="list_product.html" class="sup-btn sup-btn-teal">
           <i class="fa-solid fa-plus"></i> Add New Product
         </a>
         <a href="manage_prod.html" class="sup-btn sup-btn-outline">
-          <i class="fa-solid fa-sliders"></i> Manage Inventory
+          <i class="fa-solid fa-sliders"></i> Edit Catalog Stock
         </a>
       </div>
     </section>
 
     <!-- Key Performance Indicators (KPIs) -->
-    <section class="sup-kpi-grid" aria-label="Key Performance Indicators">
+    <section class="sup-kpi-grid" aria-label="Key Performance Indicators" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
 
       <!-- Total Products Listed -->
       <article class="sup-kpi-card">
@@ -89,7 +218,7 @@
         <div class="sup-kpi-content">
           <span class="sup-kpi-label">Total Listings</span>
           <span class="sup-kpi-value" id="totalProducts">—</span>
-          <span class="sup-kpi-subtext">Active catalog listings</span>
+          <span class="sup-kpi-subtext">Catalog products</span>
         </div>
       </article>
 
@@ -101,17 +230,17 @@
         <div class="sup-kpi-content">
           <span class="sup-kpi-label">Available Stock</span>
           <span class="sup-kpi-value" id="availableStock">—</span>
-          <span class="sup-kpi-subtext">Total inventory units</span>
+          <span class="sup-kpi-subtext">Free unreserved units</span>
         </div>
       </article>
 
-      <!-- Active Rentals -->
+      <!-- Active Rented Stock -->
       <article class="sup-kpi-card">
         <div class="sup-kpi-icon emerald">
           <i class="fa-solid fa-calendar-check"></i>
         </div>
         <div class="sup-kpi-content">
-          <span class="sup-kpi-label">Active Rentals</span>
+          <span class="sup-kpi-label">Rented Stock</span>
           <span class="sup-kpi-value" id="rentedProducts">—</span>
           <span class="sup-kpi-subtext">Currently out on rent</span>
         </div>
@@ -125,64 +254,134 @@
         <div class="sup-kpi-content">
           <span class="sup-kpi-label">Pending Requests</span>
           <span class="sup-kpi-value" id="pendingRentalRequests">—</span>
-          <span class="sup-kpi-subtext">Awaiting payment / approval</span>
+          <span class="sup-kpi-subtext">Requires accept/reject</span>
+        </div>
+      </article>
+
+      <!-- Upcoming Returns -->
+      <article class="sup-kpi-card">
+        <div class="sup-kpi-icon teal">
+          <i class="fa-solid fa-arrow-rotate-left"></i>
+        </div>
+        <div class="sup-kpi-content">
+          <span class="sup-kpi-label">Upcoming Returns</span>
+          <span class="sup-kpi-value" id="upcomingReturns">—</span>
+          <span class="sup-kpi-subtext">Ending in next 7 days</span>
+        </div>
+      </article>
+
+      <!-- Overdue Rentals -->
+      <article class="sup-kpi-card" style="border-left: 4px solid #ef4444;">
+        <div class="sup-kpi-icon" style="background:#fee2e2; color:#dc2626;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="sup-kpi-content">
+          <span class="sup-kpi-label">Overdue Rentals</span>
+          <span class="sup-kpi-value" id="overdueRentals" style="color:#dc2626;">—</span>
+          <span class="sup-kpi-subtext">Past return date</span>
         </div>
       </article>
 
     </section>
 
-    <!-- Recent Inventory Overview -->
-    <section class="sup-card">
-      <div class="sup-card-header">
-        <div>
-          <h2 class="sup-card-title">
-            <i class="fa-solid fa-boxes-stacked" style="color: var(--teal-700);"></i> Inventory Snapshot
-          </h2>
+    <!-- Rental Management Tabs & Tables -->
+    <section class="sup-card" style="margin-top: 24px;">
+      
+      <!-- Tab Headers -->
+      <div class="dash-tabs-bar">
+        <button class="dash-tab-btn active" id="tabBtn-requests" onclick="switchTab('requests')">
+          <i class="fa-solid fa-inbox"></i> Pending Requests
+          <span class="tab-counter counter-amber" id="badgePendingCount">0</span>
+        </button>
 
+        <button class="dash-tab-btn" id="tabBtn-inventory" onclick="switchTab('inventory')">
+          <i class="fa-solid fa-boxes-stacked"></i> Stock & Availability
+          <span class="tab-counter counter-teal" id="badgeInventoryCount">0</span>
+        </button>
+
+        <button class="dash-tab-btn" id="tabBtn-upcoming" onclick="switchTab('upcoming')">
+          <i class="fa-solid fa-calendar-day"></i> Upcoming Returns
+          <span class="tab-counter counter-teal" id="badgeUpcomingCount">0</span>
+        </button>
+
+        <button class="dash-tab-btn" id="tabBtn-overdue" onclick="switchTab('overdue')">
+          <i class="fa-solid fa-triangle-exclamation"></i> Overdue Rentals
+          <span class="tab-counter counter-red" id="badgeOverdueCount">0</span>
+        </button>
+
+        <button class="dash-tab-btn" id="tabBtn-all" onclick="switchTab('all')">
+          <i class="fa-solid fa-clock-rotate-left"></i> All Rentals History
+          <span class="tab-counter counter-neutral" id="badgeAllCount">0</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div id="tabContentContainer">
+        <!-- Rendered dynamically -->
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.8rem; color: var(--teal-600); margin-bottom: 12px;"></i>
+          <p>Loading rental records...</p>
         </div>
-        <a href="manage_prod.html" class="sup-btn sup-btn-secondary sup-btn-sm">
-          View All Products <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
-        </a>
       </div>
 
-      <!-- Loading Indicator -->
-      <div id="inventoryLoading" style="text-align: center; padding: 40px; color: var(--text-muted);">
-        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.8rem; color: var(--teal-600); margin-bottom: 12px;"></i>
-        <p>Loading your inventory data...</p>
-      </div>
-
-      <!-- Empty State -->
-      <div id="inventoryEmpty" class="sup-empty-state" style="display: none;">
-        <div class="sup-empty-icon"><i class="fa-solid fa-box-open"></i></div>
-        <h3 class="sup-empty-title">No products listed yet</h3>
-        <p class="sup-empty-desc">You haven't added any products to your rental catalog. Start by listing your equipment to reach renters.</p>
-        <a href="list_product.html" class="sup-btn sup-btn-teal">
-          <i class="fa-solid fa-plus"></i> List Your First Product
-        </a>
-      </div>
-
-      <!-- Inventory Table -->
-      <div id="inventoryTableWrapper" style="display: none; overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
-          <thead>
-            <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
-              <th style="padding: 12px 14px;">Product</th>
-              <th style="padding: 12px 14px;">Category</th>
-              <th style="padding: 12px 14px;">Rental Rate</th>
-              <th style="padding: 12px 14px;">Deposit</th>
-              <th style="padding: 12px 14px;">Current Stock</th>
-              <th style="padding: 12px 14px;">Status</th>
-              <th style="padding: 12px 14px; text-align: right;">Action</th>
-            </tr>
-          </thead>
-          <tbody id="inventoryTableBody">
-            <!-- Populated via JavaScript with actual backend records -->
-          </tbody>
-        </table>
-      </div>
     </section>
 
   </main>
+
+  <!-- Return Confirmation Modal -->
+  <div class="sup-modal-overlay" id="returnModal">
+    <div class="sup-modal-box">
+      <h3 class="sup-modal-title">
+        <i class="fa-solid fa-clipboard-check" style="color:var(--teal-600);"></i>
+        Confirm Product Return
+      </h3>
+      <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:16px;">
+        Confirm that the customer has returned the rented item in good condition. 
+        <strong>This will make the returned units available again immediately without inflating base stock.</strong>
+      </p>
+
+      <div id="returnModalDetails" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; font-size:0.9rem; margin-bottom:16px;"></div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display:block; font-size:0.85rem; font-weight:700; color:#334155; margin-bottom:6px;">Return Condition / Inspection Notes (Optional)</label>
+        <input type="text" id="returnNotesInput" class="sup-input" placeholder="e.g. Returned on time, inspected and verified" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button class="sup-btn sup-btn-secondary" onclick="closeReturnModal()">Cancel</button>
+        <button class="sup-btn sup-btn-teal" id="confirmReturnSubmitBtn" onclick="submitReturnConfirmation()">
+          <i class="fa-solid fa-check"></i> Confirm Return
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejection Modal -->
+  <div class="sup-modal-overlay" id="rejectModal">
+    <div class="sup-modal-box">
+      <h3 class="sup-modal-title" style="color:#dc2626;">
+        <i class="fa-solid fa-circle-xmark"></i>
+        Reject Rental Request
+      </h3>
+      <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:16px;">
+        Are you sure you want to reject this request? No stock will be reserved.
+      </p>
+
+      <div id="rejectModalDetails" style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:14px; font-size:0.9rem; margin-bottom:16px;"></div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display:block; font-size:0.85rem; font-weight:700; color:#334155; margin-bottom:6px;">Reason for Rejection (Optional)</label>
+        <input type="text" id="rejectReasonInput" class="sup-input" placeholder="e.g. Maintenance scheduled, unavailable on these dates" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button class="sup-btn sup-btn-secondary" onclick="closeRejectModal()">Cancel</button>
+        <button class="btn-action-reject" id="confirmRejectSubmitBtn" onclick="submitRejectConfirmation()">
+          <i class="fa-solid fa-xmark"></i> Reject Request
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Unified Footer -->
   <footer class="sup-footer">
@@ -192,124 +391,594 @@
   <!-- Scripts -->
   <script src="supplier-common.js"></script>
   <script>
-    window.addEventListener('DOMContentLoaded', async () => {
-      const owner = await initSupplierSession('dashboard');
-      if (!owner) return;
+    let currentOwner = null;
+    let activeTab = 'requests';
+    let allRequests = [];
+    let inventoryStatusList = [];
+    let selectedOrderForReturn = null;
+    let selectedOrderForReject = null;
 
-      document.getElementById('welcomeHeading').textContent = `Welcome back, ${owner.name}`;
-      loadDashboardData(owner.owner_id);
+    window.addEventListener('DOMContentLoaded', async () => {
+      currentOwner = await initSupplierSession('dashboard');
+      if (!currentOwner) return;
+
+      document.getElementById('welcomeHeading').textContent = `Welcome back, ${currentOwner.name}`;
+      loadDashboardHub();
     });
 
-    async function loadDashboardData(ownerId) {
-      try {
-        // Fetch dashboard summary
-        const dashRes = await fetch(`${API_BASE_URL}/owner-dashboard`, {
-          credentials: 'include'
-        });
+    async function loadDashboardHub() {
+      await Promise.all([
+        fetchSummaryData(),
+        fetchRentalRequests(),
+        fetchInventoryStatus()
+      ]);
 
-        if (dashRes.status === 401) {
+      renderCurrentTab();
+    }
+
+    async function fetchSummaryData() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/owner-dashboard`, { credentials: 'include' });
+        if (res.status === 401) {
           window.location.replace('owner_login.html');
           return;
         }
+        if (!res.ok) throw new Error('Could not load dashboard stats');
 
-        if (!dashRes.ok) {
-          throw new Error(`Dashboard request failed: ${dashRes.status}`);
-        }
-
-        const dashData = await dashRes.json();
-        const summary = dashData.summary || {};
+        const data = await res.json();
+        const summary = data.summary || {};
 
         document.getElementById('totalProducts').textContent = summary.totalProducts ?? 0;
-        document.getElementById('rentedProducts').textContent = summary.rentedProducts ?? 0;
+        document.getElementById('availableStock').textContent = summary.availableStock ?? 0;
+        document.getElementById('rentedProducts').textContent = summary.currentlyRentedUnits ?? summary.rentedProducts ?? 0;
         document.getElementById('pendingRentalRequests').textContent = summary.pendingRentalRequests ?? 0;
+        document.getElementById('upcomingReturns').textContent = summary.upcomingReturns ?? 0;
+        document.getElementById('overdueRentals').textContent = summary.overdueRentals ?? 0;
 
-        // Fetch supplier's actual products for real stock computation & preview
-        const prodRes = await fetch(`${API_BASE_URL}/owner-products/${ownerId}`, {
-          credentials: 'include'
-        });
-
-        let totalCalculatedStock = 0;
-        let products = [];
-
-        if (prodRes.ok) {
-          const prodData = await prodRes.json();
-          products = prodData.products || [];
-          totalCalculatedStock = products.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
-        }
-
-        // Available stock from backend summary or sum of product quantities
-        const finalStock = summary.totalStock !== undefined ? summary.totalStock : totalCalculatedStock;
-        document.getElementById('availableStock').textContent = finalStock;
-
-        // Render preview table
-        renderInventoryPreview(products);
+        document.getElementById('badgePendingCount').textContent = summary.pendingRentalRequests ?? 0;
+        document.getElementById('badgeUpcomingCount').textContent = summary.upcomingReturns ?? 0;
+        document.getElementById('badgeOverdueCount').textContent = summary.overdueRentals ?? 0;
 
       } catch (err) {
-        console.error('Error loading dashboard data:', err);
-        showToast('Could not load complete dashboard data. Please try again.', 'error');
-        document.getElementById('inventoryLoading').innerHTML = `
-          <p style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Error loading inventory details.</p>
-        `;
+        console.error('Error fetching summary:', err);
       }
     }
 
-    function renderInventoryPreview(products) {
-      const loadingEl = document.getElementById('inventoryLoading');
-      const emptyEl = document.getElementById('inventoryEmpty');
-      const tableWrapper = document.getElementById('inventoryTableWrapper');
-      const tbody = document.getElementById('inventoryTableBody');
+    async function fetchRentalRequests() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/owner/rental-requests`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          allRequests = data.requests || [];
+          document.getElementById('badgeAllCount').textContent = allRequests.length;
+        }
+      } catch (err) {
+        console.error('Error fetching requests:', err);
+      }
+    }
 
-      loadingEl.style.display = 'none';
+    async function fetchInventoryStatus() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/owner/inventory-status`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          inventoryStatusList = data.inventory || [];
+          document.getElementById('badgeInventoryCount').textContent = inventoryStatusList.length;
+        }
+      } catch (err) {
+        console.error('Error fetching inventory status:', err);
+      }
+    }
 
-      if (!products || products.length === 0) {
-        emptyEl.style.display = 'block';
-        tableWrapper.style.display = 'none';
+    function switchTab(tabName) {
+      activeTab = tabName;
+      document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`tabBtn-${tabName}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      renderCurrentTab();
+    }
+
+    function renderCurrentTab() {
+      const container = document.getElementById('tabContentContainer');
+
+      if (activeTab === 'requests') {
+        renderPendingRequestsTab(container);
+      } else if (activeTab === 'inventory') {
+        renderInventoryTab(container);
+      } else if (activeTab === 'upcoming') {
+        renderUpcomingReturnsTab(container);
+      } else if (activeTab === 'overdue') {
+        renderOverdueTab(container);
+      } else if (activeTab === 'all') {
+        renderAllHistoryTab(container);
+      }
+    }
+
+    // 1. Pending Requests Tab
+    function renderPendingRequestsTab(container) {
+      const pendingList = allRequests.filter(r => (r.status || '').toLowerCase() === 'pending');
+
+      if (pendingList.length === 0) {
+        container.innerHTML = `
+          <div class="sup-empty-state">
+            <div class="sup-empty-icon"><i class="fa-solid fa-inbox"></i></div>
+            <h3 class="sup-empty-title">No pending rental requests</h3>
+           
+        `;
         return;
       }
 
-      emptyEl.style.display = 'none';
-      tableWrapper.style.display = 'block';
-      tbody.innerHTML = '';
+      container.innerHTML = `
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                <th style="padding: 12px 14px;">Req ID</th>
+                <th style="padding: 12px 14px;">Product</th>
+                <th style="padding: 12px 14px;">Customer Info</th>
+                <th style="padding: 12px 14px;">Quantity</th>
+                <th style="padding: 12px 14px;">Rental Dates</th>
+                <th style="padding: 12px 14px;">Total Value</th>
+                <th style="padding: 12px 14px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pendingList.map(req => {
+                const imageSrc = req.product_image ? `${API_BASE_URL}/uploads/${encodeURIComponent(req.product_image)}` : '';
+                return `
+                  <tr style="border-bottom: 1px solid var(--border-light);">
+                    <td style="padding: 14px; font-weight: 700; color: var(--primary);">#${req.order_id}</td>
+                    <td style="padding: 14px;">
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: #e2e8f0; flex-shrink: 0;">
+                          ${imageSrc ? `<img src="${imageSrc}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fa-solid fa-image"></i>`}
+                        </div>
+                        <div>
+                          <strong>${escapeHtml(req.product_name)}</strong>
+                          <div style="font-size:0.75rem; color:var(--text-muted);">Stock Total: ${req.total_product_stock || 1} units</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="padding: 14px;">
+                      <strong>${escapeHtml(req.customer_name)}</strong>
+                      <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(req.customer_phone || req.customer_email)}</div>
+                    </td>
+                    <td style="padding: 14px; font-weight: 800; color: var(--teal-700); font-size: 1rem;">
+                      ${req.quantity || 1} unit(s)
+                    </td>
+                    <td style="padding: 14px;">
+                      <div>${req.rent_start} <span style="color:var(--text-muted);">to</span></div>
+                      <div><strong>${req.rent_end}</strong></div>
+                    </td>
+                    <td style="padding: 14px; font-weight: 700; color: var(--primary);">
+                      ₹${formatINR(req.total_amount)}
+                    </td>
+                    <td style="padding: 14px; text-align: right; white-space: nowrap;">
+                      <button class="btn-action-accept" onclick="acceptRentalRequest(${req.order_id})">
+                        <i class="fa-solid fa-check"></i> Accept & Reserve
+                      </button>
+                      <button class="btn-action-reject" onclick="openRejectModal(${req.order_id})" style="margin-left: 6px;">
+                        <i class="fa-solid fa-xmark"></i> Reject
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
 
-      // Preview top 6 products
-      const previewList = products.slice(0, 6);
+    // 2. Inventory & Stock Management Tab
+    function renderInventoryTab(container) {
+      if (inventoryStatusList.length === 0) {
+        container.innerHTML = `
+          <div class="sup-empty-state">
+            <div class="sup-empty-icon"><i class="fa-solid fa-warehouse"></i></div>
+            <h3 class="sup-empty-title">No products in inventory</h3>
+            <p class="sup-empty-desc">Add your first equipment listing to begin managing rental inventory.</p>
+            <a href="list_product.html" class="sup-btn sup-btn-teal"><i class="fa-solid fa-plus"></i> Add Product</a>
+          </div>
+        `;
+        return;
+      }
 
-      previewList.forEach(prod => {
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid var(--border-light)';
+      container.innerHTML = `
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                <th style="padding: 12px 14px;">Product</th>
+                <th style="padding: 12px 14px;">Category</th>
+                <th style="padding: 12px 14px;">Total Physical Stock</th>
+                <th style="padding: 12px 14px;">Currently Rented</th>
+                <th style="padding: 12px 14px;">Currently Available</th>
+                <th style="padding: 12px 14px;">Availability Status</th>
+                <th style="padding: 12px 14px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inventoryStatusList.map(item => {
+                const imageSrc = item.image ? `${API_BASE_URL}/uploads/${encodeURIComponent(item.image)}` : '';
+                const total = item.total_stock || 0;
+                const rented = item.currently_rented_units || 0;
+                const available = item.available_stock || 0;
 
-        const imageSrc = prod.image ? `${API_BASE_URL}/uploads/${encodeURIComponent(prod.image)}` : '';
-        const qty = Number(prod.quantity) || 0;
+                let badgeHtml = '';
+                if (available === 0) {
+                  badgeHtml = `<span class="sup-badge sup-badge-danger"><i class="fa-solid fa-circle-xmark"></i> Fully Booked / 0 Free</span>`;
+                } else if (available <= 2) {
+                  badgeHtml = `<span class="sup-badge sup-badge-warning"><i class="fa-solid fa-triangle-exclamation"></i> Low Stock (${available} Free)</span>`;
+                } else {
+                  badgeHtml = `<span class="sup-badge sup-badge-success"><i class="fa-solid fa-circle-check"></i> ${available} Units Available</span>`;
+                }
 
-        let badgeHtml = '';
-        if (qty === 0) {
-          badgeHtml = '<span class="sup-badge sup-badge-danger"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>';
-        } else if (qty <= 3) {
-          badgeHtml = '<span class="sup-badge sup-badge-warning"><i class="fa-solid fa-triangle-exclamation"></i> Low Stock</span>';
-        } else {
-          badgeHtml = '<span class="sup-badge sup-badge-success"><i class="fa-solid fa-circle-check"></i> In Stock</span>';
+                return `
+                  <tr style="border-bottom: 1px solid var(--border-light);">
+                    <td style="padding: 14px; display: flex; align-items: center; gap: 12px;">
+                      <div style="width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: #e2e8f0; flex-shrink: 0;">
+                        ${imageSrc ? `<img src="${imageSrc}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fa-solid fa-image"></i>`}
+                      </div>
+                      <strong>${escapeHtml(item.name)}</strong>
+                    </td>
+                    <td style="padding: 14px; color: var(--text-muted);">${escapeHtml(item.category)}</td>
+                    <td style="padding: 14px; font-weight: 700;">${total} units</td>
+                    <td style="padding: 14px; color: #dc2626; font-weight: 700;">${rented} units out</td>
+                    <td style="padding: 14px; color: #059669; font-weight: 800; font-size: 1.05rem;">${available} units</td>
+                    <td style="padding: 14px;">${badgeHtml}</td>
+                    <td style="padding: 14px; text-align: right;">
+                      <a href="manage_prod.html" class="sup-btn sup-btn-secondary sup-btn-sm">
+                        <i class="fa-solid fa-sliders"></i> Edit Stock
+                      </a>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // 3. Upcoming Returns Tab
+    function renderUpcomingReturnsTab(container) {
+      const today = new Date().toISOString().split('T')[0];
+      const maxDate = new Date();
+      maxDate.setDate(maxDate.getDate() + 7);
+      const maxDateStr = maxDate.toISOString().split('T')[0];
+
+      const upcoming = allRequests.filter(r => {
+        const status = (r.status || '').toLowerCase();
+        const isAccepted = ['accepted', 'approved', 'paid', 'active'].includes(status);
+        return isAccepted && !r.return_confirmed_at && (r.rent_end >= today && r.rent_end <= maxDateStr);
+      });
+
+      if (upcoming.length === 0) {
+        container.innerHTML = `
+          <div class="sup-empty-state">
+            <div class="sup-empty-icon"><i class="fa-solid fa-calendar-check"></i></div>
+            <h3 class="sup-empty-title">No upcoming returns in the next 7 days</h3>
+            <p class="sup-empty-desc">When accepted equipment bookings reach their return dates, they will appear here ready for check-in.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                <th style="padding: 12px 14px;">Booking</th>
+                <th style="padding: 12px 14px;">Product & Quantity</th>
+                <th style="padding: 12px 14px;">Customer Details</th>
+                <th style="padding: 12px 14px;">Return Due Date</th>
+                <th style="padding: 12px 14px;">Status</th>
+                <th style="padding: 12px 14px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${upcoming.map(r => {
+                return `
+                  <tr style="border-bottom: 1px solid var(--border-light);">
+                    <td style="padding: 14px; font-weight: 700;">#${r.order_id}</td>
+                    <td style="padding: 14px;">
+                      <strong>${escapeHtml(r.product_name)}</strong>
+                      <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">${r.quantity || 1} unit(s)</div>
+                    </td>
+                    <td style="padding: 14px;">
+                      <strong>${escapeHtml(r.customer_name)}</strong>
+                      <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(r.customer_phone || r.customer_email)}</div>
+                    </td>
+                    <td style="padding: 14px; font-weight: 700; color: var(--primary);">
+                      <i class="fa-regular fa-calendar" style="color:var(--teal-600);"></i> ${r.rent_end}
+                    </td>
+                    <td style="padding: 14px;">
+                      <span class="sup-badge sup-badge-teal"><i class="fa-solid fa-clock"></i> Active Rental</span>
+                    </td>
+                    <td style="padding: 14px; text-align: right;">
+                      <button class="btn-action-return" onclick="openReturnModal(${r.order_id})">
+                        <i class="fa-solid fa-clipboard-check"></i> Confirm Return
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // 4. Overdue Rentals Tab
+    function renderOverdueTab(container) {
+      const today = new Date().toISOString().split('T')[0];
+
+      const overdue = allRequests.filter(r => {
+        const status = (r.status || '').toLowerCase();
+        const isAccepted = ['accepted', 'approved', 'paid', 'active'].includes(status);
+        return isAccepted && !r.return_confirmed_at && (r.rent_end < today);
+      });
+
+      if (overdue.length === 0) {
+        container.innerHTML = `
+          <div class="sup-empty-state">
+            <div class="sup-empty-icon" style="color:#10b981;"><i class="fa-solid fa-circle-check"></i></div>
+            <h3 class="sup-empty-title">Great news! No overdue rentals</h3>
+            <p class="sup-empty-desc">All customer equipment rentals are returned or within their active schedule.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                <th style="padding: 12px 14px;">Booking</th>
+                <th style="padding: 12px 14px;">Product</th>
+                <th style="padding: 12px 14px;">Customer Contact</th>
+                <th style="padding: 12px 14px;">Overdue Since</th>
+                <th style="padding: 12px 14px;">Status Alert</th>
+                <th style="padding: 12px 14px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${overdue.map(r => {
+                return `
+                  <tr style="border-bottom: 1px solid var(--border-light); background: #fff5f5;">
+                    <td style="padding: 14px; font-weight: 700; color:#dc2626;">#${r.order_id}</td>
+                    <td style="padding: 14px;">
+                      <strong>${escapeHtml(r.product_name)}</strong>
+                      <div style="font-size:0.8rem; color:#b91c1c; font-weight:700;">${r.quantity || 1} unit(s) overdue</div>
+                    </td>
+                    <td style="padding: 14px;">
+                      <strong>${escapeHtml(r.customer_name)}</strong>
+                      <div style="font-size:0.8rem; color:#dc2626; font-weight:600;"><i class="fa-solid fa-phone"></i> ${escapeHtml(r.customer_phone || 'No phone recorded')}</div>
+                      <div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(r.customer_email)}</div>
+                    </td>
+                    <td style="padding: 14px; font-weight: 700; color:#b91c1c;">
+                      ${r.rent_end}
+                    </td>
+                    <td style="padding: 14px;">
+                      <span class="sup-badge sup-badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> OVERDUE</span>
+                    </td>
+                    <td style="padding: 14px; text-align: right;">
+                      <button class="btn-action-return" onclick="openReturnModal(${r.order_id})">
+                        <i class="fa-solid fa-clipboard-check"></i> Confirm Return
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // 5. All Rentals History Tab
+    function renderAllHistoryTab(container) {
+      if (allRequests.length === 0) {
+        container.innerHTML = `
+          <div class="sup-empty-state">
+            <div class="sup-empty-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <h3 class="sup-empty-title">No rental history found</h3>
+            <p class="sup-empty-desc">Past rental requests and returned bookings will be cataloged here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                <th style="padding: 12px 14px;">ID</th>
+                <th style="padding: 12px 14px;">Product</th>
+                <th style="padding: 12px 14px;">Customer</th>
+                <th style="padding: 12px 14px;">Quantity</th>
+                <th style="padding: 12px 14px;">Period</th>
+                <th style="padding: 12px 14px;">Value</th>
+                <th style="padding: 12px 14px;">Current Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allRequests.map(r => {
+                const status = (r.status || 'Pending').toLowerCase();
+                let badge = '<span class="sup-badge sup-badge-warning">Pending</span>';
+
+                if (status === 'returned') {
+                  badge = '<span class="sup-badge" style="background:#f3e8ff; color:#6b21a8;"><i class="fa-solid fa-circle-check"></i> Returned</span>';
+                } else if (r.is_overdue) {
+                  badge = '<span class="sup-badge sup-badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Overdue</span>';
+                } else if (['accepted', 'approved', 'paid', 'active'].includes(status)) {
+                  badge = '<span class="sup-badge sup-badge-success"><i class="fa-solid fa-circle-check"></i> Reserved / Active</span>';
+                } else if (status === 'rejected') {
+                  badge = '<span class="sup-badge sup-badge-neutral">Rejected</span>';
+                }
+
+                return `
+                  <tr style="border-bottom: 1px solid var(--border-light);">
+                    <td style="padding: 14px; font-weight:700;">#${r.order_id}</td>
+                    <td style="padding: 14px;"><strong>${escapeHtml(r.product_name)}</strong></td>
+                    <td style="padding: 14px;">${escapeHtml(r.customer_name)}</td>
+                    <td style="padding: 14px; font-weight:700;">${r.quantity || 1} unit(s)</td>
+                    <td style="padding: 14px;">${r.rent_start} to ${r.rent_end}</td>
+                    <td style="padding: 14px; font-weight:700;">₹${formatINR(r.total_amount)}</td>
+                    <td style="padding: 14px;">${badge}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Accept Request Action (With Overlap Validation)
+    async function acceptRentalRequest(orderId) {
+      if (!confirm(`Are you sure you want to ACCEPT rental request #${orderId}? Stock will be reserved for the requested dates.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/owner/rental-requests/${orderId}/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ action: 'accept' })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          showToast(data.message || 'Could not accept request', 'error');
+          alert(`⚠️ ${data.message || 'Could not accept request'}`);
+          return;
         }
 
-        tr.innerHTML = `
-          <td style="padding: 14px; display: flex; align-items: center; gap: 12px;">
-            <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); overflow: hidden; background: #e2e8f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-              ${imageSrc ? `<img src="${imageSrc}" alt="${escapeHtml(prod.name)}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fa-solid fa-image" style="color: var(--text-light);"></i>`}
-            </div>
-            <strong style="color: var(--primary); font-weight: 600;">${escapeHtml(prod.name)}</strong>
-          </td>
-          <td style="padding: 14px; color: var(--text-muted);">${escapeHtml(prod.category)}</td>
-          <td style="padding: 14px; font-weight: 700; color: var(--primary);">₹${formatINR(prod.price)} <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ ${escapeHtml(prod.rentUnit || 'day')}</span></td>
-          <td style="padding: 14px; color: var(--text-muted);">₹${formatINR(prod.deposit || 0)}</td>
-          <td style="padding: 14px; font-weight: 700; color: var(--primary);">${qty} units</td>
-          <td style="padding: 14px;">${badgeHtml}</td>
-          <td style="padding: 14px; text-align: right;">
-            <a href="manage_prod.html" class="sup-btn sup-btn-secondary sup-btn-sm" title="Manage product in inventory">
-              <i class="fa-solid fa-gear"></i> Manage
-            </a>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+        showToast(data.message || 'Request accepted and stock reserved!', 'success');
+        loadDashboardHub();
+
+      } catch (err) {
+        showToast('Error communicating with server', 'error');
+      }
+    }
+
+    // Reject Modal Handlers
+    function openRejectModal(orderId) {
+      const order = allRequests.find(r => r.order_id === orderId);
+      if (!order) return;
+      selectedOrderForReject = order;
+
+      document.getElementById('rejectModalDetails').innerHTML = `
+        <p><strong>Request:</strong> #${order.order_id} - ${escapeHtml(order.product_name)}</p>
+        <p><strong>Customer:</strong> ${escapeHtml(order.customer_name)}</p>
+        <p><strong>Requested Dates:</strong> ${order.rent_start} to ${order.rent_end} (${order.quantity || 1} units)</p>
+      `;
+
+      document.getElementById('rejectReasonInput').value = '';
+      document.getElementById('rejectModal').classList.add('active');
+    }
+
+    function closeRejectModal() {
+      document.getElementById('rejectModal').classList.remove('active');
+      selectedOrderForReject = null;
+    }
+
+    async function submitRejectConfirmation() {
+      if (!selectedOrderForReject) return;
+      const reason = document.getElementById('rejectReasonInput').value.trim();
+
+      const btn = document.getElementById('confirmRejectSubmitBtn');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/owner/rental-requests/${selectedOrderForReject.order_id}/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ action: 'reject', notes: reason || 'Rejected by supplier' })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          showToast(data.message || 'Could not reject request', 'error');
+          return;
+        }
+
+        showToast(`Request #${selectedOrderForReject.order_id} rejected. No stock was reserved.`, 'info');
+        closeRejectModal();
+        loadDashboardHub();
+
+      } catch (err) {
+        showToast('Error communicating with server', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Return Modal Handlers (Supplier confirms return)
+    function openReturnModal(orderId) {
+      const order = allRequests.find(r => r.order_id === orderId);
+      if (!order) return;
+      selectedOrderForReturn = order;
+
+      document.getElementById('returnModalDetails').innerHTML = `
+        <p><strong>Order ID:</strong> #${order.order_id}</p>
+        <p><strong>Product:</strong> ${escapeHtml(order.product_name)}</p>
+        <p><strong>Quantity Being Returned:</strong> <span style="font-weight:800; color:var(--teal-700);">${order.quantity || 1} unit(s)</span></p>
+        <p><strong>Customer:</strong> ${escapeHtml(order.customer_name)} (${escapeHtml(order.customer_phone || order.customer_email)})</p>
+        <p><strong>Due Date:</strong> ${order.rent_end} ${order.is_overdue ? '<span style="color:#dc2626; font-weight:700;">(OVERDUE)</span>' : ''}</p>
+      `;
+
+      document.getElementById('returnNotesInput').value = 'Returned in good condition';
+      document.getElementById('returnModal').classList.add('active');
+    }
+
+    function closeReturnModal() {
+      document.getElementById('returnModal').classList.remove('active');
+      selectedOrderForReturn = null;
+    }
+
+    async function submitReturnConfirmation() {
+      if (!selectedOrderForReturn) return;
+      const notes = document.getElementById('returnNotesInput').value.trim();
+
+      const btn = document.getElementById('confirmReturnSubmitBtn');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/owner/orders/${selectedOrderForReturn.order_id}/confirm-return`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ return_notes: notes })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          showToast(data.message || 'Could not confirm return', 'error');
+          alert(`⚠️ ${data.message || 'Return could not be confirmed'}`);
+          return;
+        }
+
+        showToast(data.message || 'Return confirmed! Stock is now available again.', 'success');
+        closeReturnModal();
+        loadDashboardHub();
+
+      } catch (err) {
+        showToast('Error processing return confirmation', 'error');
+      } finally {
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
