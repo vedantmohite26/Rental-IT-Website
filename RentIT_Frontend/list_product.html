@@ -8,6 +8,7 @@
   <!-- FontAwesome & Unified Stylesheet -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="supplier.css">
+<link rel="stylesheet" href="site-shell.css">
 </head>
 <body>
 
@@ -99,7 +100,7 @@
               <option value="Electronic Gadgets">Electronic Gadgets </option>
               <option value="Cameras">Cameras </option>
               <option value="Accessories">Accessories </option>
-              <option value="Other">Other Equipment</option>
+              
             </select>
             <div class="sup-form-error" id="categoryError"></div>
           </div>
@@ -125,23 +126,17 @@
           <div class="sup-grid-2">
             <div class="sup-form-group">
               <label class="sup-form-label" for="price">
-                Rental Price (₹) <span class="required">*</span>
+                Rental Price (₹ per day) <span class="required">*</span>
               </label>
               <input type="number" id="price" class="sup-form-input" min="1" step="0.01" placeholder="e.g. 1500" required>
               <div class="sup-form-error" id="priceError"></div>
             </div>
 
             <div class="sup-form-group">
-              <label class="sup-form-label" for="rentUnit">
-                Billing Unit <span class="required">*</span>
+              <label class="sup-form-label">
+                Billing Unit
               </label>
-              <select id="rentUnit" class="sup-form-select" required>
-                <option value="hour">Per Hour</option>
-                <option value="day" selected>Per Day</option>
-                <option value="week">Per Week</option>
-                <option value="month">Per Month</option>
-              </select>
-              <div class="sup-form-error" id="rentUnitError"></div>
+              <div class="sup-form-input" aria-readonly="true">Per Day</div>
             </div>
           </div>
 
@@ -213,7 +208,7 @@
 
   <!-- Unified Footer -->
   <footer class="sup-footer">
-    <p>&copy; 2026 RentIT. All rights reserved.</p>
+    <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
   </footer>
 
   <!-- Scripts -->
@@ -281,7 +276,7 @@
       e.preventDefault();
 
       // Clear previous error messages
-      const errorIds = ['nameError', 'categoryError', 'descError', 'priceError', 'rentUnitError', 'depositError', 'imageError', 'billError'];
+      const errorIds = ['nameError', 'categoryError', 'descError', 'priceError', 'depositError', 'imageError', 'billError'];
       errorIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = '';
@@ -291,7 +286,6 @@
       const category = document.getElementById('category').value;
       const description = document.getElementById('description').value.trim();
       const price = parseFloat(document.getElementById('price').value);
-      const rentUnit = document.getElementById('rentUnit').value;
       const deposit = parseFloat(document.getElementById('deposit').value);
       const imageFile = document.getElementById('image').files[0];
       const billFile = document.getElementById('bill').files[0];
@@ -312,10 +306,6 @@
       }
       if (!price || isNaN(price) || price <= 0) {
         document.getElementById('priceError').textContent = 'Please enter a valid positive rental price.';
-        isValid = false;
-      }
-      if (!rentUnit) {
-        document.getElementById('rentUnitError').textContent = 'Please select a rental billing unit.';
         isValid = false;
       }
       if (isNaN(deposit) || deposit < 5000) {
@@ -345,7 +335,7 @@
       formData.append('category', category);
       formData.append('deposit', deposit);
       formData.append('price', price);
-      formData.append('rentUnit', rentUnit);
+      formData.append('rentUnit', 'day');
       formData.append('description', description);
       formData.append('image', imageFile);
       formData.append('invoice', billFile);

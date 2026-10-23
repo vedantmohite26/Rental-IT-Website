@@ -34,12 +34,16 @@
 
     footer { background: #222; color: white; padding: 20px; text-align: center; margin-top: 40px; }
   </style>
+<link rel="stylesheet" href="site-shell.css">
 </head>
 <body>
 
 <header>
   <div class="header-left">
-    <h1 onclick="window.location.href='index.html'">RentIT</h1>
+    <a class="site-brand" href="index.html" aria-label="RentIT home">
+      <span class="site-brand-mark"><i class="fa-solid fa-cube" aria-hidden="true"></i></span>
+      <span>RentIT</span>
+    </a>
   </div>
   <a href="index.html" class="back-button">← Back to Search</a>
 </header>
@@ -54,7 +58,7 @@
 <div class="products-grid" id="productsGrid"></div>
 
 <footer>
-  <p>&copy; 2025 RentIT. All rights reserved.</p>
+  <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
 </footer>
 
 <script>
@@ -98,7 +102,7 @@ function displayProducts(items) {
         <div>${availBadge}</div>
         <div class="product-price">₹${p.price}/day</div>
         <p><strong>Category:</strong> ${p.category}</p>
-        <button onclick="viewProduct('${p.product_id}')">Rent Now / Check Dates</button>
+        <button onclick="viewProduct('${p.product_id}')">Rent Now</button>
       </div>
     `;
   }).join('');

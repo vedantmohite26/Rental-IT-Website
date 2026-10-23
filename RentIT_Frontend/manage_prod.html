@@ -8,6 +8,107 @@
   <!-- FontAwesome & Unified Stylesheet -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="supplier.css">
+  <style>
+    .sup-header {
+      background: #111827;
+      border-bottom: none;
+      box-shadow: none;
+    }
+
+    .sup-header-inner {
+      max-width: none;
+      padding: 10px 20px;
+    }
+
+    .sup-brand {
+      gap: 12px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .sup-brand-logo {
+      width: 52px;
+      height: 52px;
+      background: #ff6600;
+      border-radius: 13px;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 10px rgba(255, 102, 0, 0.25);
+    }
+
+    .sup-brand > div:last-child {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sup-brand-text {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: white;
+      letter-spacing: normal;
+    }
+
+    .sup-nav-link {
+      color: #fff;
+    }
+
+    .sup-nav-link:hover,
+    .sup-nav-link.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .sup-user-chip {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .sup-user-name {
+      color: white;
+    }
+
+    .sup-btn-signout {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.35);
+      color: white;
+    }
+
+    .sup-btn-signout:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.6);
+      color: white;
+    }
+
+    .sup-mobile-toggle {
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .sup-header-inner {
+        padding: 10px 12px;
+      }
+
+      .sup-brand {
+        gap: 8px;
+      }
+
+      .sup-brand-logo {
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
+      }
+
+      .sup-brand-text {
+        font-size: 1.4rem;
+      }
+
+      .sup-nav {
+        background: #111827;
+        border-bottom: none;
+      }
+    }
+  </style>
+<link rel="stylesheet" href="site-shell.css">
 </head>
 <body>
 
@@ -88,7 +189,7 @@
           <option value="Electronic Gadgets">Electronic Gadgets</option>
           <option value="Cameras">Cameras</option>
           <option value="Accessories">Accessories</option>
-          <option value="Other">Other</option>
+          
         </select>
 
         <select id="stockFilter" class="sup-select" onchange="filterProducts()">
@@ -196,7 +297,7 @@
       <div class="sup-modal-body" style="padding-top: 16px;">
 
         <!-- Big Full-Size Image View -->
-        <div id="detailsImgWrapper" style="width: 100%; max-height: 400px; background: #0f172a; border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
+        <div id="detailsImgWrapper" style="width: 100%; max-height: 400px; background: #222222; border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
           <img id="detailsModalImg" src="" alt="Product Full Image" style="width: 100%; max-height: 400px; object-fit: contain;">
         </div>
 
@@ -267,18 +368,13 @@
                 <option value="Electronic Gadgets">Electronic Gadgets</option>
                 <option value="Cameras">Cameras</option>
                 <option value="Accessories">Accessories</option>
-                <option value="Other">Other</option>
+                
               </select>
             </div>
 
             <div class="sup-form-group">
-              <label class="sup-form-label" for="editRentUnit">Rental Billing Unit <span class="required">*</span></label>
-              <select id="editRentUnit" name="rentUnit" class="sup-form-select" required>
-                <option value="hour">Per Hour</option>
-                <option value="day">Per Day</option>
-                <option value="week">Per Week</option>
-                <option value="month">Per Month</option>
-              </select>
+              <label class="sup-form-label">Rental Billing Unit</label>
+              <div class="sup-form-input" aria-readonly="true">Per Day</div>
             </div>
           </div>
 
@@ -329,7 +425,7 @@
 
   <!-- Unified Footer -->
   <footer class="sup-footer">
-    <p>&copy; 2026 RentIT. All rights reserved.</p>
+    <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
   </footer>
 
   <!-- Scripts -->
@@ -517,7 +613,7 @@
             <div class="sup-prod-pricing-row">
               <div>
                 <span class="sup-prod-price">₹${formatINR(prod.price)}</span>
-                <span class="sup-prod-unit">/ ${escapeHtml(prod.rentUnit || 'day')}</span>
+                <span class="sup-prod-unit">/ day</span>
               </div>
               <div class="sup-prod-deposit">
                 Deposit: <strong>₹${formatINR(prod.deposit || 0)}</strong>
@@ -531,10 +627,10 @@
                 <span class="sup-stock-count" id="stock-val-${prod.product_id}">${qty} units</span>
               </div>
               <div class="sup-stock-actions">
-                <button type="button" class="sup-btn-stock plus" onclick="event.stopPropagation(); openStockModal(${prod.product_id}, '${escapeHtml(prod.name)}', ${qty}, 'increase')">
+                <button type="button" class="sup-btn-stock plus" onclick="event.stopPropagation(); openStockModal(${prod.product_id}, 'increase')">
                   <i class="fa-solid fa-plus"></i> Add Stock
                 </button>
-                <button type="button" class="sup-btn-stock minus" onclick="event.stopPropagation(); openStockModal(${prod.product_id}, '${escapeHtml(prod.name)}', ${qty}, 'decrease')">
+                <button type="button" class="sup-btn-stock minus" onclick="event.stopPropagation(); openStockModal(${prod.product_id}, 'decrease')">
                   <i class="fa-solid fa-minus"></i> Reduce Stock
                 </button>
               </div>
@@ -546,7 +642,7 @@
                 <button type="button" class="sup-btn sup-btn-outline sup-btn-sm" onclick="event.stopPropagation(); openEditModal(${prod.product_id})" title="Edit product details in a new card">
                   <i class="fa-solid fa-pen-to-square"></i> Edit
                 </button>
-                <button type="button" class="sup-btn sup-btn-danger-outline sup-btn-sm" onclick="event.stopPropagation(); handleDeleteProduct(${prod.product_id}, '${escapeHtml(prod.name)}')" title="Delete listing">
+                <button type="button" class="sup-btn sup-btn-danger-outline sup-btn-sm" onclick="event.stopPropagation(); handleDeleteProduct(${prod.product_id})" title="Delete listing">
                   <i class="fa-solid fa-trash-can"></i> Delete
                 </button>
               </div>
@@ -579,7 +675,7 @@
 
       document.getElementById('detailsModalTitle').textContent = prod.name || 'Product Details';
       document.getElementById('detailsModalCategory').textContent = prod.category || 'General';
-      document.getElementById('detailsModalPrice').textContent = `₹${formatINR(prod.price)} / ${prod.rentUnit || 'day'}`;
+      document.getElementById('detailsModalPrice').textContent = `₹${formatINR(prod.price)} / day`;
       document.getElementById('detailsModalDeposit').textContent = `₹${formatINR(prod.deposit || 0)}`;
 
       const qty = Number(prod.quantity) || 0;
@@ -611,11 +707,15 @@
     }
 
     // ================= Stock Management Modal Logic =================
-    function openStockModal(productId, productName, currentQty, defaultAction = 'increase') {
+    function openStockModal(productId, defaultAction = 'increase') {
+      const prod = allProducts.find(p => p.product_id === productId);
+      if (!prod) return;
+
+      const currentQty = Number(prod.quantity) || 0;
       activeStockProductId = productId;
       activeStockCurrentQty = currentQty;
 
-      document.getElementById('stockModalProdName').textContent = productName;
+      document.getElementById('stockModalProdName').textContent = prod.name;
       document.getElementById('stockModalCurrentQty').textContent = `${currentQty} units`;
       document.getElementById('stockAction').value = defaultAction;
       document.getElementById('stockUnitsInput').value = '';
@@ -717,7 +817,6 @@
       document.getElementById('editProductId').value = prod.product_id;
       document.getElementById('editName').value = prod.name || '';
       document.getElementById('editCategory').value = prod.category || 'Other';
-      document.getElementById('editRentUnit').value = prod.rentUnit || 'day';
       document.getElementById('editPrice').value = prod.price || 0;
       document.getElementById('editDeposit').value = prod.deposit || 0;
       document.getElementById('editDescription').value = prod.description || '';
@@ -768,8 +867,11 @@
     }
 
     // ================= Delete Product =================
-    async function handleDeleteProduct(id, name) {
-      if (!confirm(`Are you sure you want to permanently delete "${name}" from your catalog?\nThis action cannot be undone.`)) {
+    async function handleDeleteProduct(id) {
+      const prod = allProducts.find(p => p.product_id === id);
+      const name = prod ? prod.name : 'this product';
+
+      if (!confirm(`Are you sure you want to permanently delete "${name}" from your stock?\nThis action cannot be undone.`)) {
         return;
       }
 

@@ -1,47 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Login - RentIT</title>
 
   <!-- FontAwesome & Unified Stylesheet -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="supplier.css">
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-      background: var(--bg-canvas);
-      color: var(--text-main);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* Full page background */
     .auth-canvas {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 65px 20px 35px;
-      background:
-        radial-gradient(
-          circle at top,
-          rgba(13, 148, 136, 0.08) 0%,
-          transparent 60%
-        ),
-        var(--bg-canvas);
+      padding: 30px 20px;
+      background: radial-gradient(circle at top, rgba(255, 102, 0, 0.08) 0%, transparent 60%), var(--bg-canvas);
     }
 
-    /* Back to Home */
+    .auth-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 440px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-lg);
+      padding: 36px 32px;
+    }
+
     .back-home-btn {
       position: fixed;
       top: 16px;
@@ -53,408 +41,168 @@
       font-weight: 600;
       color: var(--text-muted);
       text-decoration: none;
-      background: var(--bg-card);
+      background: #ffffff;
       border: 1px solid var(--border-light);
-      border-radius: var(--radius-full);
-      padding: 8px 14px;
-      box-shadow: var(--shadow-sm);
-      transition: all var(--transition-fast);
+      border-radius: 999px;
+      padding: 7px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      transition: color 0.18s, box-shadow 0.18s, background 0.18s;
       z-index: 100;
     }
 
     .back-home-btn:hover {
-      color: var(--teal-700);
-      background: var(--teal-50);
-      border-color: var(--teal-200);
+      color: #ff6600;
+      background: #fff7ed;
+      border-color: #fed7aa;
       box-shadow: var(--shadow-md);
     }
 
-    /* RentIT branding */
-    .auth-brand-header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .auth-brand {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      margin-bottom: 12px;
-    }
-
-    .auth-brand .sup-brand-logo {
-      width: 42px;
-      height: 42px;
-      background: linear-gradient(
-        135deg,
-        var(--primary) 0%,
-        var(--teal-700) 100%
-      );
-      color: var(--text-inverse);
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
-    }
-
-    .auth-brand .sup-brand-text {
+    .sup-brand .sup-brand-text {
+      color: #222222;
       font-size: 1.6rem;
       font-weight: 800;
-      color: var(--primary);
       letter-spacing: -0.02em;
-    }
-
-    /* Admin badge */
-    .admin-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 5px 12px;
-      border-radius: var(--radius-full);
-      background: var(--teal-50);
-      color: var(--teal-700);
-      border: 1px solid var(--teal-200);
-      letter-spacing: 0.03em;
-    }
-
-    /* Login card */
-    .login-box {
-      width: 100%;
-      max-width: 440px;
-      padding: 36px 32px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .login-heading {
-      text-align: center;
-      margin-bottom: 8px;
-    }
-
-    .brand-icon {
-      width: 54px;
-      height: 54px;
-      background: linear-gradient(
-        135deg,
-        var(--primary) 0%,
-        var(--teal-700) 100%
-      );
-      color: var(--text-inverse);
-      border-radius: var(--radius-md);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 10px rgba(13, 148, 136, 0.18);
-    }
-
-    .login-heading h2 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--primary);
-      margin-bottom: 7px;
-      letter-spacing: -0.02em;
-    }
-
-    .login-heading p {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-
-    /* Form fields */
-    .form-group {
-      text-align: left;
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 7px;
-    }
-
-    .required {
-      color: #dc2626;
-      margin-left: 2px;
-    }
-
-    .input-wrap {
-      position: relative;
-    }
-
-    .input-wrap .input-icon {
-      position: absolute;
-      left: 13px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-light);
-      font-size: 0.9rem;
-      pointer-events: none;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 11px 14px 11px 38px;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-sm);
-      font-size: 0.925rem;
-      font-family: inherit;
-      color: var(--text-main);
-      background: var(--bg-card);
-      outline: none;
-      transition: all var(--transition-fast);
-    }
-
-    .form-group input::placeholder {
-      color: var(--text-light);
-      opacity: 1;
-    }
-
-    .form-group input:focus {
-      border-color: var(--teal-600);
-      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
-    }
-
-    .password-input {
-      padding-right: 42px !important;
-    }
-
-    .password-toggle {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 5px;
-      font-size: 0.95rem;
-    }
-
-    .password-toggle:hover {
-      color: var(--teal-700);
-    }
-
-    /* Login button */
-    .login-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 20px;
-      margin-top: 8px;
-      background: var(--primary);
-      color: var(--text-inverse);
-      border: 1px solid transparent;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 700;
-      font-family: inherit;
-      transition: all var(--transition-fast);
-    }
-
-    .login-btn:hover {
-      background: var(--primary-light);
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
-    }
-
-    .login-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    /* Alert messages */
-    .alert {
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      margin-bottom: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      display: none;
-      text-align: left;
-      line-height: 1.5;
-      overflow-wrap: anywhere;
-    }
-
-    .alert-danger {
-      background: var(--danger-bg);
-      color: var(--danger-text);
-      border: 1px solid var(--danger-border);
-    }
-
-    .alert-success {
-      background: var(--success-bg);
-      color: var(--success-text);
-      border: 1px solid var(--success-border);
-    }
-
-    /* Card footer */
-    .login-footer {
-      margin-top: 24px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-light);
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-
-    .login-footer i {
-      color: var(--teal-700);
-      margin-right: 5px;
-    }
-
-    @media (max-width: 480px) {
-      .auth-canvas {
-        padding: 75px 16px 25px;
-      }
-
-      .login-box {
-        padding: 28px 22px;
-      }
-
-      .back-home-btn {
-        top: 12px;
-        left: 12px;
-      }
     }
   </style>
 </head>
 
-<body>
+<body style="background-color: var(--bg-canvas);">
 
-  <!-- Back to Home -->
+  <!-- Back to Home — top left -->
   <a href="index.html" class="back-home-btn">
-    <i class="fa-solid fa-arrow-left"></i>
-    Back to Home
+    <i class="fa-solid fa-arrow-left"></i> Back to Home
   </a>
 
-  <main class="auth-canvas">
+  <div class="auth-canvas">
 
-    <!-- RentIT Brand -->
-    <header class="auth-brand-header">
-      <a href="index.html" class="sup-brand auth-brand">
-        <span class="sup-brand-logo">
-          <i class="fa-solid fa-cube"></i>
-        </span>
+    <!-- Brand Header -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="index.html" class="sup-brand" style="justify-content: center; margin-bottom: 8px;">
+        <div class="sup-brand-logo"><i class="fa-solid fa-cube"></i></div>
         <span class="sup-brand-text">RentIT</span>
       </a>
 
-      <span class="admin-badge">
-        <i class="fa-solid fa-shield-halved"></i>
-        Admin Portal
+      <span class="sup-badge sup-badge-teal">
+        <i class="fa-solid fa-shield-halved"></i> Admin Portal
       </span>
-    </header>
+    </div>
 
     <!-- Admin Login Card -->
-    <section class="login-box">
+    <div class="auth-card">
 
-      <div class="login-heading">
-        
-
-        <h2>Admin Portal</h2>
-        
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 6px; letter-spacing: -0.02em;">
+          Admin login
+        </h1>
       </div>
 
-      <div id="alertBox" class="alert alert-danger" role="alert"
-        aria-live="polite"></div>
+      <!-- Alert Message Box -->
+      <div id="alertBox"
+           role="alert"
+           aria-live="polite"
+           style="display: none; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 18px; font-size: 0.85rem; font-weight: 600;">
+      </div>
 
-      <form id="adminLoginForm" onsubmit="adminLogin(event)" novalidate>
+      <form id="adminLoginForm" novalidate>
 
-        <div class="form-group">
-          <label for="username">
+        <!-- Admin Username -->
+        <div class="sup-form-group">
+          <label class="sup-form-label" for="adminUsername">
             Username <span class="required">*</span>
           </label>
 
-          <div class="input-wrap">
-            <i class="fa-solid fa-user input-icon"></i>
+          <div style="position: relative;">
             <input
               type="text"
-              id="username"
+              id="adminUsername"
+              class="sup-form-input"
               placeholder="e.g. admin"
               required
               autocomplete="username"
+              style="padding-left: 36px;"
             >
+
+            <i class="fa-solid fa-user"
+               style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 0.9rem; pointer-events: none;">
+            </i>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="password">
-            Password <span class="required">*</span>
-          </label>
+        <!-- Admin Password -->
+        <div class="sup-form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="sup-form-label" for="adminPassword" style="margin-bottom: 0;">
+              Password <span class="required">*</span>
+            </label>
+          </div>
 
-          <div class="input-wrap">
-            <i class="fa-solid fa-lock input-icon"></i>
+          <div style="position: relative;">
             <input
               type="password"
-              id="password"
-              class="password-input"
-              placeholder="Enter password"
+              id="adminPassword"
+              class="sup-form-input"
+              placeholder="Enter your password"
               required
               autocomplete="current-password"
+              style="padding-left: 36px; padding-right: 36px;"
             >
+
+            <i class="fa-solid fa-lock"
+               style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 0.9rem; pointer-events: none;">
+            </i>
 
             <button
               type="button"
               id="togglePassword"
-              class="password-toggle"
               aria-label="Show password"
               aria-pressed="false"
+              style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;"
             >
               <i id="eyeIcon" class="fa-solid fa-eye"></i>
             </button>
           </div>
         </div>
 
-        <button type="submit" id="loginBtn" class="login-btn">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i>
-          Login
+        <!-- Admin Login Button -->
+        <button
+          type="submit"
+          id="loginBtn"
+          class="sup-btn sup-btn-primary"
+          style="width: 100%; padding: 12px; margin-top: 10px; font-size: 0.95rem;"
+        >
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
         </button>
 
       </form>
-
-      
-
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script>
-    // Preserve the existing backend URL and cookie behavior.
-    const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
+    // Preserve the admin backend URL and cookie behavior.
+    const API_BASE_URL =
+      `${window.location.protocol === 'file:' ? 'http:' : window.location.protocol}//${window.location.hostname || 'localhost'}:3001`;
 
+    // Restore the existing session-expiry message.
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
 
       if (urlParams.get('error') === 'session_expired') {
-        showAlert('Your admin session expired or was invalid. Please sign in again.');
+        showAlert(
+          'Your admin session expired or was invalid. Please sign in again.'
+        );
       }
     });
 
-    // Show/hide password without changing authentication behavior.
+    // Show/hide admin password.
     document.getElementById('togglePassword').addEventListener('click', () => {
-      const passwordInput = document.getElementById('password');
+      const passwordInput = document.getElementById('adminPassword');
       const eyeIcon = document.getElementById('eyeIcon');
       const toggleButton = document.getElementById('togglePassword');
+
       const isPassword = passwordInput.type === 'password';
 
       passwordInput.type = isPassword ? 'text' : 'password';
+
       eyeIcon.className = isPassword
         ? 'fa-solid fa-eye-slash'
         : 'fa-solid fa-eye';
@@ -466,77 +214,103 @@
       );
     });
 
-    function showAlert(msg, isError = true) {
+    // Display alerts safely.
+    function showAlert(message, isError = true) {
       const box = document.getElementById('alertBox');
 
-      box.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
       box.style.display = 'block';
+      box.style.background = isError
+        ? 'var(--danger-bg)'
+        : 'var(--success-bg)';
 
-      // Safely display the server message as text.
+      box.style.color = isError
+        ? 'var(--danger-text)'
+        : 'var(--success-text)';
+
+      box.style.border = `1px solid ${
+        isError ? 'var(--danger-border)' : 'var(--success-border)'
+      }`;
+
       const icon = document.createElement('i');
+
       icon.className = `fa-solid ${
         isError ? 'fa-circle-exclamation' : 'fa-circle-check'
       }`;
 
-      box.replaceChildren(icon, document.createTextNode(' ' + msg));
+      box.replaceChildren(icon, document.createTextNode(' ' + message));
     }
 
-    async function adminLogin(e) {
-      if (e) e.preventDefault();
+    // Admin authentication.
+    document.getElementById('adminLoginForm').addEventListener(
+      'submit',
+      async function(e) {
+        e.preventDefault();
 
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const loginBtn = document.getElementById('loginBtn');
+        const username = document
+          .getElementById('adminUsername')
+          .value.trim();
 
-      if (!username || !password) {
-        showAlert('Please enter both username and password.');
-        return;
-      }
+        const password = document
+          .getElementById('adminPassword')
+          .value.trim();
 
-      loginBtn.disabled = true;
-      loginBtn.innerHTML =
-        '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+        const loginBtn = document.getElementById('loginBtn');
 
-      try {
-        const res = await fetch(`${API_BASE_URL}/admin/login`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
+        if (!username || !password) {
+          showAlert('Please enter both username and password.');
+          return;
+        }
 
-        const data = await res.json();
+        loginBtn.disabled = true;
 
-        if (res.ok && data.success) {
-          showAlert('Login successful! Redirecting...', false);
+        loginBtn.innerHTML =
+          '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
 
-          // Preserve the existing admin session key.
-          sessionStorage.setItem('rentitAdminAuth', 'true');
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/login`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+          });
 
-          setTimeout(() => {
-            window.location.href = 'admin_dash.html';
-          }, 350);
+          const data = await res.json();
 
-        } else {
-          showAlert(data.message || 'Invalid username or password.');
+          if (res.ok && data.success) {
+            showAlert('Login successful! Redirecting...', false);
+
+            // Preserve the existing admin session key.
+            sessionStorage.setItem('rentitAdminAuth', 'true');
+
+            setTimeout(() => {
+              window.location.href = 'admin_dash.html';
+            }, 350);
+
+          } else {
+            showAlert(data.message || 'Invalid username or password.');
+
+            loginBtn.disabled = false;
+
+            loginBtn.innerHTML =
+              '<i class="fa-solid fa-arrow-right-to-bracket"></i> Login';
+          }
+
+        } catch (err) {
+          console.error('Admin login error:', err);
+
+          showAlert(
+            'Could not connect to the backend server. Make sure it is running on port 3001.'
+          );
 
           loginBtn.disabled = false;
+
           loginBtn.innerHTML =
             '<i class="fa-solid fa-arrow-right-to-bracket"></i> Login';
         }
-
-      } catch (err) {
-        console.error('Admin login error:', err);
-
-        showAlert(
-          'Could not connect to the backend server. Make sure it is running on port 3001.'
-        );
-
-        loginBtn.disabled = false;
-        loginBtn.innerHTML =
-          '<i class="fa-solid fa-arrow-right-to-bracket"></i> Login';
       }
-    }
+    );
   </script>
 
 </body>

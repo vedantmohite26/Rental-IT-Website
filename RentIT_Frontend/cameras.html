@@ -5,86 +5,315 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Cameras - RentIT</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+<link rel="stylesheet" href="storefront-nav.css">
 <style>
-  body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f8f9fa; }
-  header { background-color: #222; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-  header h1 { margin: 0; font-size: 1.8rem; font-weight: bold; cursor: pointer; }
+  :root {
+    --page-bg: #f8f9fa;
+    --ink: #172033;
+    --muted: #64748b;
+    --orange: #ff6600;
+    --border: #e5e7eb;
+  }
 
-  /* ✅ Back Button */
-  .back-btn {
-    background: #fff;
-    color: #222;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--ink);
+  }
+
+  .hero {
+    min-height: 350px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: 0.3s;
+    background:
+      linear-gradient(90deg, rgba(10, 17, 31, 0.94) 0%, rgba(10, 17, 31, 0.78) 45%, rgba(10, 17, 31, 0.12) 100%),
+      url('image/dslr.jpg') center 48% / cover no-repeat;
+    color: white;
+    position: relative;
+    overflow: hidden;
   }
-  .back-btn:hover { background: #ddd; }
 
-  /* Hero Section */
-  .hero { text-align: center; padding: 100px 20px; background: url('https://framerusercontent.com/images/jxoXbPyOfxWX3oP8UgRtb2W8Cig.png?width=325&height=238') no-repeat center center/cover; color: white; position: relative; }
-  .hero::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1; }
-  .hero h2, .hero p { position: relative; z-index: 2; }
-  .hero h2 { font-size: 2.5rem; margin-bottom: 15px; }
-  .hero p { font-size: 1.2rem; margin-bottom: 20px; }
+  .hero-content {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    padding: 64px 24px;
+    position: relative;
+    z-index: 1;
+  }
 
-  /* Products Section */
-  .products-section { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-  .products-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-  .products-info { font-size: 1rem; color: #666; }
-  .sort-controls { display: flex; align-items: center; gap: 10px; }
-  .sort-label { font-weight: bold; color: #333; }
-  .sort-select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; background: white; font-size: 0.9rem; }
-  .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 7px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffe0cc;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-  .product-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; transition: 0.3s; text-align: center; padding-bottom: 10px; }
-  .product-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-  .product-card img { width: 100%; height: 180px; object-fit: cover; }
+  .hero h2 {
+    max-width: 620px;
+    margin: 0 0 12px;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
 
-  .product-card h3 { margin: 12px 12px 4px; font-size: 1.05rem; font-weight: 600; color: #333; min-height: 40px; }
+  .hero p {
+    max-width: 540px;
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    line-height: 1.7;
+  }
+
+  .products-section {
+    max-width: 1200px;
+    margin: 34px auto 56px;
+    padding: 0 20px;
+  }
+
+  .products-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 22px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(110deg, #fff 0%, #fff 78%, #fff7ed 100%);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  }
+
+  .products-info {
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sort-label {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .sort-select {
+    min-width: 190px;
+    padding: 10px 34px 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .sort-select:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+  }
+
+  .product-card {
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    border-color: #fed7aa;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.1);
+  }
+
+  .product-card img {
+    display: block;
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+    background: #f1f5f9;
+  }
+
+  .product-card h3 {
+    min-height: 48px;
+    margin: 16px 18px 6px;
+    color: var(--ink);
+    font-size: 1.08rem;
+    font-weight: 750;
+    line-height: 1.4;
+  }
 
   .product-card p {
-    color: #555;
-    margin: 0 12px 8px;
-    font-size: 0.9rem;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    min-height: 40px;
+    margin: 0 18px 8px;
     overflow: hidden;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
     text-overflow: ellipsis;
-    min-height: 38px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
-  .product-price { font-size: 1.2rem; font-weight: bold; color: #ff6600; margin: 8px 0; }
+  .product-card > div {
+    margin: 0 18px;
+  }
 
-  .product-card button { background: #ff6600; color: white; border: none; padding: 10px 20px; margin-top: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-  .product-card button:hover { background: #e65c00; }
+  .product-card > div > span {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 !important;
+    padding: 5px 10px !important;
+    border-radius: 999px;
+  }
 
-  .no-products { text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); color: #666; }
-  footer { background: #222; color: white; padding: 20px; text-align: center; margin-top: 40px; }
+  .availability-in-stock {
+    border: 1px solid #bbf7d0;
+  }
 
-  /* Floating Add Button */
-  .add-button { position: fixed; bottom: 30px; right: 30px; background: #ff6600; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: 0.3s; z-index: 2000; }
-  .add-button:hover { background: #e65c00; transform: scale(1.1); }
+  .availability-out-of-stock {
+    border: 1px solid #fecaca;
+  }
+
+  .product-price {
+    margin: 12px 18px 8px;
+    color: #c2410c;
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .product-card button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 18px 0;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ff6600, #e65c00);
+    color: white;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(255, 102, 0, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .product-card button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(255, 102, 0, 0.28);
+  }
+
+  .no-products {
+    grid-column: 1 / -1;
+    padding: 44px 24px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(135deg, white 65%, #fff7ed);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .no-products h3 {
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
+
+  .no-products button {
+    margin-top: 15px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ff6600, #e65c00);
+    color: white;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+  }
+
+  footer {
+    margin-top: auto;
+    padding: 20px;
+    background: #111827;
+    color: white;
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .hero { min-height: 300px; background-position: 60% center; }
+    .hero-content { padding: 48px 22px; }
+    .hero p { font-size: 1rem; }
+    .products-section { margin-top: 24px; padding: 0 14px; }
+    .products-controls { align-items: flex-start; flex-direction: column; padding: 16px; }
+    .sort-controls { width: 100%; justify-content: space-between; }
+    .sort-select { min-width: 0; flex: 1; }
+    .products-grid { grid-template-columns: 1fr; gap: 16px; }
+    .product-card img { height: 220px; }
+  }
 </style>
+<link rel="stylesheet" href="category-catalog.css">
+<link rel="stylesheet" href="site-shell.css">
 </head>
-<body>
+<body class="catalog-page catalog-cameras">
 
-<header>
-  <button class="back-btn" onclick="history.back()">
-    <i class="fa-solid fa-arrow-left"></i> Back
-  </button>
-  <h1 onclick="window.location.href='index.html'">RentIT</h1>
+<header class="store-header">
+  <div class="store-header-inner">
+    <a href="index.html" class="store-brand" aria-label="RentIT home">
+      <span class="brand-mark"><i class="fa-solid fa-cube" aria-hidden="true"></i></span>
+      <span>RentIT</span>
+    </a>
+    <div class="store-header-actions">
+      <button class="back-btn" type="button" onclick="if (history.length > 1) history.back(); else window.location.href = 'index.html';">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
+      </button>
+      <a href="cart.html" class="store-cart-link">
+        <span class="store-cart-icon" aria-hidden="true">🛒</span>
+        <span class="store-cart-count">0</span>
+        <span class="store-cart-text">Cart</span>
+      </a>
+    </div>
+  </div>
 </header>
 
 <section class="hero">
-  <h2>Rent Professional Cameras</h2>
-  <p>DSLRs, Lenses & Photography Gear</p>
+  <div class="hero-content">
+    
+    <h2>Rent Professional Cameras</h2>
+    <p>DSLRs, lenses, and photography gear for your next event.</p>
+  </div>
 </section>
 
 <section class="products-section">
@@ -106,12 +335,8 @@
   <div class="products-grid" id="productsGrid"></div>
 </section>
 
-<button class="add-button" onclick="window.location.href='owner_login.html'" title="Add your product">
-  <i class="fa-solid fa-plus"></i>
-</button>
-
 <footer>
-  <p>&copy; 2025 RentIT. All rights reserved.</p>
+  <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
 </footer>
 
 <script>
@@ -141,8 +366,8 @@ function displayProducts(items) {
   grid.innerHTML = items.map(p => {
     const qty = Number(p.quantity) || 0;
     const availBadge = qty > 0 
-      ? `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-circle-check"></i> In Stock (${qty} available)</span>`
-      : `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
+      ? `<span class="availability-in-stock" style="font-size:0.75rem; font-weight:700; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-circle-check"></i> In Stock (${qty} available)</span>`
+      : `<span class="availability-out-of-stock" style="font-size:0.75rem; font-weight:700; background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
 
     return `
       <div class="product-card">
@@ -150,9 +375,9 @@ function displayProducts(items) {
         <h3>${p.name}</h3>
         <p>${p.description || ''}</p>
         <div>${availBadge}</div>
-        <div class="product-price">₹${p.price}/${p.rentUnit || 'day'}</div>
+        <div class="product-price">₹${p.price}/day</div>
         <p><strong>Deposit:</strong> ₹${p.deposit || 0}</p>
-        <button onclick="openProduct(${p.product_id})">Rent Now / Check Dates</button>
+        <button onclick="openProduct(${p.product_id})">Rent Now</button>
       </div>
     `;
   }).join('');
@@ -173,6 +398,7 @@ function sortProducts() {
   displayProducts(sorted);
 }
 </script>
+<script src="storefront-nav.js"></script>
 
 </body>
 </html>

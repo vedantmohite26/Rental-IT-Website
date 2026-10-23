@@ -15,8 +15,8 @@ This application supports:
 - Owner sign-up and login
 - Product listing with images and invoices
 - Product search and category browsing
-- Cart and checkout flow
-- Order placement and payment integration with Razorpay
+- Multi-product cart rental requests with per-item dates and stock validation
+- Supplier approval, stock reservation, and simulated payment completion
 - Owner dashboard for managing inventory and product information
 
 ## Tech Stack
@@ -28,7 +28,6 @@ This application supports:
 - Multer for file uploads
 - bcrypt for password hashing
 - CORS and Express Session
-- Razorpay SDK
 - dotenv for environment configuration
 
 ### Frontend
@@ -100,16 +99,7 @@ cd RentIT/RentIT_Backend
 npm install
 ```
 
-3. Create a `.env` file in `RentIT_Backend` with the required environment variables:
-
-```env
-RAZORPAY_KEY_ID=your_key_id
-RAZORPAY_KEY_SECRET=your_key_secret
-```
-
-> If Razorpay is not needed for local testing, the app may still start as long as the variables are set to valid values.
-
-4. Start the backend server:
+3. Start the backend server:
 
 ```bash
 node server.js
@@ -134,6 +124,7 @@ The backend exposes routes for authentication, product management, and orders.
 ### User routes
 - `POST /signup`
 - `POST /login`
+- `POST /rental-requests` (submits all cart items together)
 
 ### Owner routes
 - `POST /owner-signup`
@@ -147,7 +138,7 @@ The backend exposes routes for authentication, product management, and orders.
 
 ### Other features
 - Image upload handling via `uploads/`
-- Payment integration with Razorpay API
+- Payment is marked completed when a supplier approves a rental request; no gateway is used
 - Session management for app state
 
 ## Database
@@ -170,8 +161,8 @@ The backend automatically creates tables such as:
 - Create a personal account
 - Sign in securely
 - Search products by name, category, or description
-- Add items to cart
-- Place orders and complete payment
+- Add multiple products to the cart, choose each item's rental dates, and submit one grouped request
+- Track supplier approval, payment status, and rental status for each product
 - View order-related pages and account details
 
 ### For Owners
@@ -188,7 +179,7 @@ The backend automatically creates tables such as:
 - In production, set a strong `SESSION_SECRET` and use HTTPS so the session cookie can be sent securely.
 - Uploaded images and invoices are stored in `RentIT_Backend/uploads/`.
 
-The owner dashboard summary uses existing database data: current rentals are products with a `Paid` order whose rental dates include today, available products are the remaining products, and pending rental requests are orders with `Pending` status.
+Cart items are submitted together as separate product orders sharing a cart-request ID. Each supplier approves or rejects their product separately. Approval rechecks overlapping accepted rentals, reserves stock for the date range, and marks payment completed; pending requests do not reserve inventory.
 
 ## Running the Project
 

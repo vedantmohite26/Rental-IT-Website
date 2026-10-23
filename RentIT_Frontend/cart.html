@@ -12,8 +12,50 @@
       background: #f8f9fa;
     }
     header, footer {
-      background-color: #222;
+      background-color: #111827;
       color: white;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      text-decoration: none;
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+    .brand-mark {
+      width: 52px;
+      height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 13px;
+      background: #ff6600;
+      color: white;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 10px rgba(255, 102, 0, 0.25);
+    }
+    .back-btn {
+      background: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 5px;
+      padding: 9px 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .back-btn:hover {
+      background: #444;
+    }
+    footer {
       padding: 15px 20px;
       text-align: center;
     }
@@ -35,6 +77,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
     }
     .cart-item img {
       width: 120px;
@@ -52,6 +95,36 @@
     .cart-details p {
       margin: 5px 0;
       color: #555;
+    }
+    .cart-dates {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .cart-dates label, .address-field label {
+      display: block;
+      color: #333;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .cart-dates input, .address-field input {
+      display: block;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-top: 4px;
+    }
+    .address-field { margin-top: 24px; }
+    .address-field input { width: 100%; box-sizing: border-box; }
+    .request-error {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 6px;
+      color: #991b1b;
+      background: #fef2f2;
+      white-space: pre-line;
     }
     .cart-actions button {
       background: #ff6600;
@@ -88,12 +161,28 @@
     .checkout-btn button:hover {
       background: #e65c00;
     }
+    .checkout-btn button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    @media (max-width: 650px) {
+      .cart-item { align-items: flex-start; flex-wrap: wrap; }
+      .cart-details { padding: 0; min-width: calc(100% - 140px); }
+      .cart-actions { margin-left: auto; }
+    }
   </style>
+<link rel="stylesheet" href="site-shell.css">
 </head>
 <body>
 
 <header>
-  <h1>RentIT - Your Cart</h1>
+  <a class="brand" href="index.html" aria-label="RentIT home">
+    <span class="brand-mark"><i class="fa-solid fa-cube" aria-hidden="true"></i></span>
+    <span>RentIT</span>
+  </a>
+  <button class="back-btn" type="button" onclick="if (history.length > 1) history.back(); else window.location.href = 'index.html';">
+    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
+  </button>
 </header>
 
 <div class="container">
@@ -103,13 +192,20 @@
 
   <div class="total-box" id="totalPrice"></div>
 
+  
+  <div class="address-field" id="addressField">
+    <label for="deliveryAddress">Delivery  Address</label>
+    <input type="text" id="deliveryAddress" placeholder="Enter your delivery or pickup address" required>
+  </div>
+  <div id="requestError" class="request-error" role="alert"></div>
+
   <div class="checkout-btn">
-    <button onclick="proceedToPayment()">Proceed to Payment</button>
+    <button id="submitRequestsButton" onclick="submitRentalRequests()">Submit Rental Request</button>
   </div>
 </div>
 
 <footer>
-  <p>&copy; 2025 RentIT. All rights reserved.</p>
+  <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
 </footer>
 
 <script>
@@ -117,69 +213,185 @@ const API_BASE_URL = `${window.location.protocol === 'file:' ? 'http:' : window.
 let cartStorageKey = null;
 
 function getCart() {
-  return cartStorageKey ? JSON.parse(localStorage.getItem(cartStorageKey)) || [] : [];
+  if (!cartStorageKey) return [];
+  try {
+    const cart = JSON.parse(localStorage.getItem(cartStorageKey) || '[]');
+    return Array.isArray(cart) ? cart : [];
+  } catch (error) {
+    console.error('Could not read cart contents:', error);
+    return [];
+  }
 }
 
 function renderCart() {
-  let cart = getCart();
+  const cart = getCart();
   const cartContainer = document.getElementById("cartItems");
   const totalPriceElement = document.getElementById("totalPrice");
+  const requestButton = document.getElementById("submitRequestsButton");
+  const addressField = document.getElementById("addressField");
 
   if (cart.length === 0) {
-    cartContainer.innerHTML = "<p style='text-align:center;color:#555;'>Your cart is empty.</p>";
+    cartContainer.innerHTML = "<p style='text-align:center;color:#555;'>Your cart is empty. <a href='index.html'>Browse products</a> to get started.</p>";
     totalPriceElement.textContent = "";
+    requestButton.disabled = true;
+    addressField.style.display = "none";
     return;
   }
 
+  requestButton.disabled = false;
+  addressField.style.display = "block";
   let totalRent = 0;
   let totalDeposit = 0;
+  const today = getTodayDate();
 
-  cartContainer.innerHTML = "";
-
-  cart.forEach((item, index) => {
-    const duration = item.duration || 1;
-    const rentUnit = item.rentUnit || "day";
-    const deposit = parseFloat(item.deposit) || 0;
-
-    const subtotal = item.price * duration;
+  cartContainer.innerHTML = cart.map((item, index) => {
+    const startDate = item.startDate || today;
+    const endDate = item.endDate || startDate;
+    const duration = getRentalDays(startDate, endDate);
+    const quantity = Math.max(1, Number.parseInt(item.quantity, 10) || 1);
+    const price = Number(item.price) || 0;
+    const deposit = Number(item.deposit) || 0;
+    const subtotal = price * duration * quantity;
     totalRent += subtotal;
-    totalDeposit += deposit;
+    totalDeposit += deposit * quantity;
 
-    cartContainer.innerHTML += `
+    return `
       <div class="cart-item">
-        <img src="${API_BASE_URL}/uploads/${item.image}" alt="${item.name}">
+        <img src="${item.image ? `${API_BASE_URL}/uploads/${encodeURIComponent(item.image)}` : 'image/dslr.jpg'}" alt="${escapeHtml(item.name)}">
         <div class="cart-details">
-          <h4>${item.name}</h4>
-          <p>Price: ₹${item.price} / ${rentUnit}</p>
-          <p>Duration: ${duration} ${rentUnit}(s)</p>
-          <p>Subtotal Rent: <strong>₹${subtotal}</strong></p>
-          <p>Deposit: <strong>₹${deposit}</strong></p>
+          <h4>${escapeHtml(item.name)}</h4>
+          <p>Price: ₹${price.toLocaleString('en-IN')} / day · Quantity: ${quantity}</p>
+          <p>Duration: ${duration} day(s) · Subtotal rent: <strong>₹${subtotal.toLocaleString('en-IN')}</strong></p>
+          <p>Refundable deposit: <strong>₹${(deposit * quantity).toLocaleString('en-IN')}</strong></p>
+          <div class="cart-dates">
+            <label>Start date
+              <input type="date" min="${today}" value="${escapeHtml(startDate)}" required onchange="updateCartDate(${index}, 'startDate', this.value)" aria-label="Rental start date for ${escapeHtml(item.name)}">
+            </label>
+            <label>End date
+              <input type="date" min="${startDate > today ? startDate : today}" value="${escapeHtml(endDate)}" required onchange="updateCartDate(${index}, 'endDate', this.value)" aria-label="Rental end date for ${escapeHtml(item.name)}">
+            </label>
+          </div>
         </div>
         <div class="cart-actions">
           <button onclick="removeItem(${index})">Remove</button>
         </div>
       </div>
     `;
-  });
+  }).join('');
 
   const grandTotal = totalRent + totalDeposit;
-  localStorage.setItem("totalAmount", grandTotal); // ✅ THIS WILL BE USED IN payment.html
+  totalPriceElement.textContent = `Total Rent: ₹${totalRent.toLocaleString('en-IN')} + Refundable Deposits: ₹${totalDeposit.toLocaleString('en-IN')} = Estimated Total: ₹${grandTotal.toLocaleString('en-IN')}`;
+}
 
-  totalPriceElement.textContent = `Total Rent: ₹${totalRent}  +  Deposit: ₹${totalDeposit}  =  Grand Total: ₹${grandTotal}`;
+function getRentalDays(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  return Number.isFinite(days) && days > 0 ? days : 1;
+}
+
+function getTodayDate() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  })[character]);
+}
+
+function updateCartDate(index, field, value) {
+  const cart = getCart();
+  if (!cart[index]) return;
+  cart[index].startDate = cart[index].startDate || getTodayDate();
+  cart[index].endDate = cart[index].endDate || cart[index].startDate;
+  cart[index][field] = value;
+  if (field === 'startDate' && cart[index].endDate < value) {
+    cart[index].endDate = value;
+  }
+  cart[index].duration = getRentalDays(cart[index].startDate, cart[index].endDate);
+  localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+  renderCart();
 }
 
 function removeItem(index) {
-  let cart = getCart();
+  const cart = getCart();
   cart.splice(index, 1);
   localStorage.setItem(cartStorageKey, JSON.stringify(cart));
-  loadCart();
+  renderCart();
 }
 
-function proceedToPayment() {
-  let cart = getCart();
-  if (cart.length === 0) return alert("Your cart is empty!");
+async function submitRentalRequests() {
+  const cart = getCart();
+  const button = document.getElementById("submitRequestsButton");
+  const errorElement = document.getElementById("requestError");
+  const address = document.getElementById("deliveryAddress").value.trim();
+  if (cart.length === 0) return;
+  if (!address) {
+    errorElement.textContent = "Enter a delivery or pickup address before submitting.";
+    errorElement.style.display = "block";
+    return;
+  }
 
-  window.location.href = "payment.html";
+  const today = getTodayDate();
+  const invalidItems = cart.filter(item => (
+    !item.startDate ||
+    !item.endDate ||
+    item.startDate < today ||
+    item.endDate < item.startDate
+  ));
+  if (invalidItems.length > 0) {
+    const messages = invalidItems.map(item => {
+      const name = item.name || "A cart product";
+      const dates = item.startDate && item.endDate
+        ? ` (${item.startDate} to ${item.endDate})`
+        : "";
+      let reason = "select both a start and end date.";
+      if (item.startDate && item.startDate < today) {
+        reason = "start date has passed. Choose today or a future date.";
+      } else if (item.startDate && item.endDate && item.endDate < item.startDate) {
+        reason = "end date is before its start date.";
+      }
+      return `${name}${dates}: ${reason}`;
+    });
+    errorElement.textContent = `Please fix the rental dates for these products:\n${messages.join("\n")}`;
+    errorElement.style.display = "block";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Submitting requests...";
+  errorElement.style.display = "none";
+  try {
+    const response = await fetch(`${API_BASE_URL}/rental-requests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        address,
+        items: cart.map(item => ({
+          product_id: item.product_id,
+          quantity: Math.max(1, Number.parseInt(item.quantity, 10) || 1),
+          startDate: item.startDate || getTodayDate(),
+          endDate: item.endDate || item.startDate || getTodayDate()
+        }))
+      })
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Could not submit your rental request.");
+    }
+
+    localStorage.removeItem(cartStorageKey);
+    window.location.href = "orders.html";
+  } catch (error) {
+    console.error("Rental request submission failed:", error);
+    errorElement.textContent = error.message || "Could not submit your rental request. Please try again.";
+    errorElement.style.display = "block";
+    button.disabled = false;
+    button.textContent = "Submit Rental Request";
+  }
 }
 
 async function loadCart() {
@@ -196,6 +408,7 @@ async function loadCart() {
         </p>`;
       document.getElementById("totalPrice").textContent = "";
       document.querySelector(".checkout-btn").style.display = "none";
+      document.getElementById("addressField").style.display = "none";
       return;
     }
 
@@ -205,6 +418,7 @@ async function loadCart() {
 
     const { user } = await response.json();
     cartStorageKey = `rentitCart_${user.user_id}`;
+    document.getElementById("deliveryAddress").value = user.address || "";
     renderCart();
   } catch (error) {
     console.error("Cart session check failed:", error);

@@ -1,0 +1,143 @@
+.store-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #111827;
+  color: #fff;
+  padding: 10px 20px;
+}
+
+.store-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.store-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.brand-mark {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: #ff6600;
+  color: #fff;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 10px rgba(255, 102, 0, 0.25);
+}
+
+.store-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: 1px solid #555;
+  border-radius: 5px;
+  background: #333;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #444;
+}
+
+.store-cart-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.store-cart-link:hover {
+  color: #ffb17d;
+}
+
+.store-cart-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.store-cart-count {
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  min-width: 12px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: orange;
+  color: #111;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.store-cart-text {
+  padding-left: 2px;
+}
+
+@media (max-width: 480px) {
+  .store-header {
+    padding: 8px 12px;
+  }
+
+  .store-header-inner {
+    gap: 10px;
+  }
+
+  .store-brand {
+    gap: 8px;
+    font-size: 1.4rem;
+  }
+
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    border-radius: 11px;
+    font-size: 1.25rem;
+  }
+
+  .store-header-actions {
+    gap: 10px;
+  }
+
+  .back-btn {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .store-cart-text {
+    display: none;
+  }
+}

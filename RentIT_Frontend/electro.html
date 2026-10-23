@@ -5,29 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Electronics - RentIT</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+<link rel="stylesheet" href="storefront-nav.css">
 <style>
   body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f8f9fa; }
-
-  header { background-color: #222; color: white; padding: 10px 20px; display: flex; align-items: center; gap: 15px; position: sticky; top: 0; z-index: 1000; }
-  header h1 { margin: 0; font-size: 1.8rem; font-weight: bold; cursor: pointer; }
-
-  /* Back Button */
-  .back-btn {
-    background: #fff;
-    color: #222;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: 0.3s;
-  }
-  .back-btn:hover {
-    background: #ddd;
-  }
 
   /* Hero Section */
   .hero { 
@@ -72,30 +52,46 @@
 
   .no-products { text-align: center; padding: 40px; background: white; border-radius: 10px; }
 
-  footer { background: #222; color: white; padding: 20px; text-align: center; margin-top: 40px; }
+  footer { background: #111827; color: white; padding: 20px; text-align: center; margin-top: 40px; }
 
-  .add-button { position: fixed; bottom: 30px; right: 30px; background: #ff6600; color: white; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; }
-  .add-button:hover { background: #e65c00; }
 </style>
+<link rel="stylesheet" href="category-catalog.css">
+<link rel="stylesheet" href="site-shell.css">
 </head>
-<body>
+<body class="catalog-page catalog-electronics">
 
-<header>
-  <button class="back-btn" onclick="history.back()">
-    <i class="fa-solid fa-arrow-left"></i> Back
-  </button>
-  <h1 onclick="window.location.href='index.html'">RentIT</h1>
+<header class="store-header">
+  <div class="store-header-inner">
+    <a href="index.html" class="store-brand" aria-label="RentIT home">
+      <span class="brand-mark"><i class="fa-solid fa-cube" aria-hidden="true"></i></span>
+      <span>RentIT</span>
+    </a>
+    <div class="store-header-actions">
+      <button class="back-btn" type="button" onclick="if (history.length > 1) history.back(); else window.location.href = 'index.html';">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
+      </button>
+      <a href="cart.html" class="store-cart-link">
+        <span class="store-cart-icon" aria-hidden="true">🛒</span>
+        <span class="store-cart-count">0</span>
+        <span class="store-cart-text">Cart</span>
+      </a>
+    </div>
+  </div>
 </header>
 
 <section class="hero">
-  <h2>Rent Electronic Gadgets</h2>
-  <p>Laptops, TVs, Consoles & More</p>
+  <div class="hero-content">
+    
+    <h2>Rent Electronic Gadgets</h2>
+    <p>Laptops, TVs, consoles, and everyday tech for work, entertainment, and everything in between.</p>
+  </div>
 </section>
 
 <section class="products-section">
   <div class="products-controls">
     <div class="products-info" id="productsInfo">Electronic Devices & Gadgets</div>
     <div class="sort-controls">
+      <label class="sort-label" for="sortSelect">Sort by:</label>
       <select class="sort-select" id="sortSelect" onchange="sortProducts()">
         <option value="name-asc">Name (A-Z)</option>
         <option value="name-desc">Name (Z-A)</option>
@@ -108,12 +104,8 @@
   <div class="products-grid" id="productsGrid"></div>
 </section>
 
-<button class="add-button" onclick="window.location.href='owner_login.html'">
-  <i class="fa-solid fa-plus"></i>
-</button>
-
 <footer>
-  <p>&copy; 2025 RentIT. All rights reserved.</p>
+  <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
 </footer>
 
 <script>
@@ -134,8 +126,8 @@ function displayProducts(items) {
   grid.innerHTML = items.map(p => {
     const qty = Number(p.quantity) || 0;
     const availBadge = qty > 0 
-      ? `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-circle-check"></i> In Stock (${qty} available)</span>`
-      : `<span style="display:inline-block; margin:6px 0; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
+      ? `<span class="availability-in-stock" style="font-size:0.75rem; font-weight:700; background:#dcfce7; color:#15803d;"><i class="fa-solid fa-circle-check"></i> In Stock (${qty} available)</span>`
+      : `<span class="availability-out-of-stock" style="font-size:0.75rem; font-weight:700; background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
 
     return `
       <div class="product-card">
@@ -143,14 +135,15 @@ function displayProducts(items) {
         <h3>${p.name}</h3>
         <p>${p.description || ''}</p>
         <div>${availBadge}</div>
-        <div class="product-price">₹${p.price}/${p.rentUnit || 'day'}</div>
+        <div class="product-price">₹${p.price}/day</div>
         <p><strong>Deposit:</strong> ₹${p.deposit || 0}</p>
-        <button onclick="window.location.href='product_details.html?id=${p.product_id}'">Rent Now / Check Dates</button>
+        <button onclick="window.location.href='product_details.html?id=${p.product_id}'">Rent Now </button>
       </div>
     `;
   }).join('');
 }
 </script>
+<script src="storefront-nav.js"></script>
 
 
 </body>

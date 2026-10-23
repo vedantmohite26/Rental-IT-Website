@@ -10,6 +10,105 @@
   <link rel="stylesheet" href="supplier.css">
 
   <style>
+    .sup-header {
+      background: #111827;
+      border-bottom: none;
+      box-shadow: none;
+    }
+
+    .sup-header-inner {
+      max-width: none;
+      padding: 10px 20px;
+    }
+
+    .sup-brand {
+      gap: 12px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .sup-brand-logo {
+      width: 52px;
+      height: 52px;
+      background: #ff6600;
+      border-radius: 13px;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 10px rgba(255, 102, 0, 0.25);
+    }
+
+    .sup-brand > div:last-child {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sup-brand-text {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: white;
+      letter-spacing: normal;
+    }
+
+    .sup-nav-link {
+      color: #fff;
+    }
+
+    .sup-nav-link:hover,
+    .sup-nav-link.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .sup-user-chip {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .sup-user-name {
+      color: white;
+    }
+
+    .sup-btn-signout {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.35);
+      color: white;
+    }
+
+    .sup-btn-signout:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.6);
+      color: white;
+    }
+
+    .sup-mobile-toggle {
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .sup-header-inner {
+        padding: 10px 12px;
+      }
+
+      .sup-brand {
+        gap: 8px;
+      }
+
+      .sup-brand-logo {
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
+      }
+
+      .sup-brand-text {
+        font-size: 1.4rem;
+      }
+
+      .sup-nav {
+        background: #111827;
+        border-bottom: none;
+      }
+    }
+
     /* Tabbed Interface Styling */
     .dash-tabs-bar {
       display: flex;
@@ -36,10 +135,10 @@
       border-bottom: 3px solid transparent;
       margin-bottom: -2px;
     }
-    .dash-tab-btn:hover { color: var(--primary); }
+    .dash-tab-btn:hover { color: #ff6600; }
     .dash-tab-btn.active {
-      color: var(--teal-700);
-      border-bottom-color: var(--teal-600);
+      color: #ff6600;
+      border-bottom-color: #ff6600;
     }
     .tab-counter {
       padding: 2px 8px;
@@ -49,7 +148,7 @@
     }
     .counter-amber { background: #fef3c7; color: #b45309; }
     .counter-red { background: #fee2e2; color: #dc2626; }
-    .counter-teal { background: #ccfbf1; color: #0f766e; }
+    .counter-teal { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
     .counter-neutral { background: #e2e8f0; color: #475569; }
 
     /* Action Buttons */
@@ -137,6 +236,7 @@
       gap: 10px;
     }
   </style>
+<link rel="stylesheet" href="site-shell.css">
 </head>
 <body>
 
@@ -202,7 +302,7 @@
           <i class="fa-solid fa-plus"></i> Add New Product
         </a>
         <a href="manage_prod.html" class="sup-btn sup-btn-outline">
-          <i class="fa-solid fa-sliders"></i> Edit Catalog Stock
+          <i class="fa-solid fa-sliders"></i> Edit products Stock
         </a>
       </div>
     </section>
@@ -385,7 +485,7 @@
 
   <!-- Unified Footer -->
   <footer class="sup-footer">
-    <p>&copy; 2026 RentIT. All rights reserved.</p>
+    <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
   </footer>
 
   <!-- Scripts -->
@@ -397,6 +497,34 @@
     let inventoryStatusList = [];
     let selectedOrderForReturn = null;
     let selectedOrderForReject = null;
+
+    function localDateString(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function isAcceptedBooking(request) {
+      return ['accepted', 'approved', 'paid', 'active'].includes((request.status || '').trim().toLowerCase());
+    }
+
+    function getBookingStatusLabel(request) {
+      const status = (request.status || 'Pending').trim().toLowerCase();
+      if (isAcceptedBooking(request)) return 'Reserved';
+      if (status === 'returned') return 'Returned';
+      return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+
+    function getRentalStatusLabel(request) {
+      if ((request.status || '').trim().toLowerCase() === 'returned' || request.return_confirmed_at) return 'Returned';
+      if (!isAcceptedBooking(request)) return 'Not Started';
+
+      const today = localDateString();
+      if (request.rent_start > today) return 'Upcoming — Not Started';
+      if (request.rent_end < today || request.is_overdue) return 'Overdue';
+      return 'Active';
+    }
 
     window.addEventListener('DOMContentLoaded', async () => {
       currentOwner = await initSupplierSession('dashboard');
@@ -504,7 +632,8 @@
           <div class="sup-empty-state">
             <div class="sup-empty-icon"><i class="fa-solid fa-inbox"></i></div>
             <h3 class="sup-empty-title">No pending rental requests</h3>
-           
+            <p class="sup-empty-desc">When renters submit booking requests for your equipment, they will appear here awaiting your confirmation.</p>
+          </div>
         `;
         return;
       }
@@ -528,7 +657,10 @@
                 const imageSrc = req.product_image ? `${API_BASE_URL}/uploads/${encodeURIComponent(req.product_image)}` : '';
                 return `
                   <tr style="border-bottom: 1px solid var(--border-light);">
-                    <td style="padding: 14px; font-weight: 700; color: var(--primary);">#${req.order_id}</td>
+                    <td style="padding: 14px; font-weight: 700; color: var(--primary);">
+                      #${req.order_id}
+                      ${req.request_group_id ? `<div style="font-size:0.72rem; color:var(--text-muted);">Cart ${escapeHtml(req.request_group_id.substring(0, 8).toUpperCase())}</div>` : ''}
+                    </td>
                     <td style="padding: 14px;">
                       <div style="display: flex; align-items: center; gap: 10px;">
                         <div style="width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: #e2e8f0; flex-shrink: 0;">
@@ -556,7 +688,7 @@
                     </td>
                     <td style="padding: 14px; text-align: right; white-space: nowrap;">
                       <button class="btn-action-accept" onclick="acceptRentalRequest(${req.order_id})">
-                        <i class="fa-solid fa-check"></i> Accept & Reserve
+                        <i class="fa-solid fa-check"></i> Approve & Mark Paid
                       </button>
                       <button class="btn-action-reject" onclick="openRejectModal(${req.order_id})" style="margin-left: 6px;">
                         <i class="fa-solid fa-xmark"></i> Reject
@@ -644,16 +776,19 @@
 
     // 3. Upcoming Returns Tab
     function renderUpcomingReturnsTab(container) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateString();
       const maxDate = new Date();
       maxDate.setDate(maxDate.getDate() + 7);
-      const maxDateStr = maxDate.toISOString().split('T')[0];
+      const maxDateStr = localDateString(maxDate);
 
-      const upcoming = allRequests.filter(r => {
-        const status = (r.status || '').toLowerCase();
-        const isAccepted = ['accepted', 'approved', 'paid', 'active'].includes(status);
-        return isAccepted && !r.return_confirmed_at && (r.rent_end >= today && r.rent_end <= maxDateStr);
-      });
+      const upcoming = allRequests.filter(r => (
+        isAcceptedBooking(r) &&
+        !r.return_confirmed_at &&
+        r.rent_start &&
+        r.rent_start <= today &&
+        r.rent_end >= today &&
+        r.rent_end <= maxDateStr
+      ));
 
       if (upcoming.length === 0) {
         container.innerHTML = `
@@ -714,12 +849,10 @@
 
     // 4. Overdue Rentals Tab
     function renderOverdueTab(container) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateString();
 
       const overdue = allRequests.filter(r => {
-        const status = (r.status || '').toLowerCase();
-        const isAccepted = ['accepted', 'approved', 'paid', 'active'].includes(status);
-        return isAccepted && !r.return_confirmed_at && (r.rent_end < today);
+        return isAcceptedBooking(r) && !r.return_confirmed_at && (r.rent_end < today);
       });
 
       if (overdue.length === 0) {
@@ -787,7 +920,7 @@
           <div class="sup-empty-state">
             <div class="sup-empty-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
             <h3 class="sup-empty-title">No rental history found</h3>
-            <p class="sup-empty-desc">Past rental requests and returned bookings will be cataloged here.</p>
+            <p class="sup-empty-desc">Past rental requests and returned bookings will be displayed here.</p>
           </div>
         `;
         return;
@@ -804,23 +937,27 @@
                 <th style="padding: 12px 14px;">Quantity</th>
                 <th style="padding: 12px 14px;">Period</th>
                 <th style="padding: 12px 14px;">Value</th>
-                <th style="padding: 12px 14px;">Current Status</th>
+                <th style="padding: 12px 14px;">Booking Status</th>
+                <th style="padding: 12px 14px;">Payment Status</th>
+                <th style="padding: 12px 14px;">Rental Status</th>
               </tr>
             </thead>
             <tbody>
               ${allRequests.map(r => {
-                const status = (r.status || 'Pending').toLowerCase();
-                let badge = '<span class="sup-badge sup-badge-warning">Pending</span>';
-
-                if (status === 'returned') {
-                  badge = '<span class="sup-badge" style="background:#f3e8ff; color:#6b21a8;"><i class="fa-solid fa-circle-check"></i> Returned</span>';
-                } else if (r.is_overdue) {
-                  badge = '<span class="sup-badge sup-badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Overdue</span>';
-                } else if (['accepted', 'approved', 'paid', 'active'].includes(status)) {
-                  badge = '<span class="sup-badge sup-badge-success"><i class="fa-solid fa-circle-check"></i> Reserved / Active</span>';
-                } else if (status === 'rejected') {
-                  badge = '<span class="sup-badge sup-badge-neutral">Rejected</span>';
-                }
+                const bookingStatus = getBookingStatusLabel(r);
+                const paymentStatus = (r.payment_status || 'Pending').trim();
+                const rentalStatus = getRentalStatusLabel(r);
+                const bookingBadge = bookingStatus === 'Reserved'
+                  ? '<span class="sup-badge sup-badge-success">Reserved</span>'
+                  : bookingStatus === 'Returned'
+                    ? '<span class="sup-badge" style="background:#f3e8ff; color:#6b21a8;">Returned</span>'
+                    : bookingStatus === 'Rejected'
+                      ? '<span class="sup-badge sup-badge-neutral">Rejected</span>'
+                      : '<span class="sup-badge sup-badge-warning">' + escapeHtml(bookingStatus) + '</span>';
+                const paymentLabel = paymentStatus.toLowerCase() === 'completed' ? 'Payment Completed' : paymentStatus;
+                const paymentBadge = '<span class="sup-badge ' + (paymentStatus.toLowerCase() === 'completed' ? 'sup-badge-success' : 'sup-badge-warning') + '">' + escapeHtml(paymentLabel) + '</span>';
+                const rentalBadgeClass = rentalStatus === 'Overdue' ? 'sup-badge-danger' : rentalStatus === 'Active' ? 'sup-badge-teal' : 'sup-badge-neutral';
+                const rentalBadge = '<span class="sup-badge ' + rentalBadgeClass + '">' + escapeHtml(rentalStatus) + '</span>';
 
                 return `
                   <tr style="border-bottom: 1px solid var(--border-light);">
@@ -828,9 +965,11 @@
                     <td style="padding: 14px;"><strong>${escapeHtml(r.product_name)}</strong></td>
                     <td style="padding: 14px;">${escapeHtml(r.customer_name)}</td>
                     <td style="padding: 14px; font-weight:700;">${r.quantity || 1} unit(s)</td>
-                    <td style="padding: 14px;">${r.rent_start} to ${r.rent_end}</td>
+                    <td style="padding: 14px;">${r.rent_start} <span style="white-space: nowrap;">to ${r.rent_end}</span></td>
                     <td style="padding: 14px; font-weight:700;">₹${formatINR(r.total_amount)}</td>
-                    <td style="padding: 14px;">${badge}</td>
+                    <td style="padding: 14px;">${bookingBadge}</td>
+                    <td style="padding: 14px;">${paymentBadge}</td>
+                    <td style="padding: 14px;">${rentalBadge}</td>
                   </tr>
                 `;
               }).join('')}
@@ -842,7 +981,7 @@
 
     // Accept Request Action (With Overlap Validation)
     async function acceptRentalRequest(orderId) {
-      if (!confirm(`Are you sure you want to ACCEPT rental request #${orderId}? Stock will be reserved for the requested dates.`)) {
+      if (!confirm(`Approve rental request #${orderId}? Stock will be reserved and payment marked completed.`)) {
         return;
       }
 
@@ -862,7 +1001,7 @@
           return;
         }
 
-        showToast(data.message || 'Request accepted and stock reserved!', 'success');
+        showToast(data.message || 'Request approved, stock reserved, and payment marked completed.', 'success');
         loadDashboardHub();
 
       } catch (err) {
