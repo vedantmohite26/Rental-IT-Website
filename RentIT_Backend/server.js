@@ -15,16 +15,8 @@ const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
 
-const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const session = require('express-session');
-
-// ================= Razorpay Setup =================
-
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_secret_placeholder'
-});
 
 // ================= Ensure Uploads Folder Exists =================
 const uploadDir = path.join(__dirname, 'uploads');
@@ -119,7 +111,7 @@ app.use(session({
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000   // 24 hours (was 1 hour — caused silent logout mid-session)
     }
 }));
 
@@ -139,6 +131,19 @@ function requireUser(req, res, next) {
         return res.status(401).json({
             success: false,
             message: 'Please login to continue'
+        });
+    }
+
+    next();
+}
+
+let ordersSchemaReady = false;
+
+function requireOrdersSchema(req, res, next) {
+    if (!ordersSchemaReady) {
+        return res.status(503).json({
+            success: false,
+            message: 'Rental requests are initializing. Please try again shortly.'
         });
     }
 
@@ -212,7 +217,16 @@ db.run(`
     )
 `, (err) => {
     if (err) console.error('Products table error:', err.message);
-    else console.log('Products table ready.');
+    else {
+        console.log('Products table ready.');
+        db.run("UPDATE products SET rentUnit = 'day' WHERE rentUnit IS NULL OR rentUnit <> 'day'", (updateErr) => {
+            if (updateErr) {
+                console.error('Product billing unit migration error:', updateErr.message);
+            } else {
+                console.log('Product billing units normalized to daily.');
+            }
+        });
+    }
 });
 
 db.run(`
@@ -229,6 +243,8 @@ db.run(`
         return_confirmed_at DATETIME,
         supplier_notes TEXT,
         payment_id TEXT,
+        payment_status TEXT NOT NULL DEFAULT 'Pending',
+        request_group_id TEXT,
         address TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(user_id),
@@ -239,13 +255,53 @@ db.run(`
     else console.log('Orders table ready.');
 
     const columnsToEnsure = [
-        "ALTER TABLE orders ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1",
-        "ALTER TABLE orders ADD COLUMN customer_notes TEXT",
-        "ALTER TABLE orders ADD COLUMN return_confirmed_at DATETIME",
-        "ALTER TABLE orders ADD COLUMN supplier_notes TEXT"
+        ['quantity', 'INTEGER NOT NULL DEFAULT 1'],
+        ['customer_notes', 'TEXT'],
+        ['return_confirmed_at', 'DATETIME'],
+        ['supplier_notes', 'TEXT'],
+        ['payment_status', "TEXT NOT NULL DEFAULT 'Pending'"],
+        ['request_group_id', 'TEXT']
     ];
-    columnsToEnsure.forEach((alterSql) => {
-        db.run(alterSql, () => {});
+
+    db.all('PRAGMA table_info(orders)', (columnsErr, columns) => {
+        if (columnsErr) {
+            console.error('Orders schema check error:', columnsErr.message);
+            return;
+        }
+
+        const existingColumns = new Set(columns.map((column) => column.name));
+        const addMissingColumn = (index) => {
+            if (index >= columnsToEnsure.length) {
+                db.run(
+                    "UPDATE orders SET payment_status = 'Completed' WHERE LOWER(status) IN ('accepted', 'approved', 'paid', 'active')",
+                    (migrationErr) => {
+                        if (migrationErr) {
+                            console.error('Order payment status migration error:', migrationErr.message);
+                            return;
+                        }
+                        ordersSchemaReady = true;
+                        console.log('Orders rental/payment fields ready.');
+                    }
+                );
+                return;
+            }
+
+            const [name, definition] = columnsToEnsure[index];
+            if (existingColumns.has(name)) {
+                addMissingColumn(index + 1);
+                return;
+            }
+
+            db.run(`ALTER TABLE orders ADD COLUMN ${name} ${definition}`, (alterErr) => {
+                if (alterErr) {
+                    console.error(`Orders ${name} column migration error:`, alterErr.message);
+                    return;
+                }
+                addMissingColumn(index + 1);
+            });
+        };
+
+        addMissingColumn(0);
     });
 });
 
@@ -627,10 +683,21 @@ app.post('/owner/logout', (req, res) => {
  * Calculates stock availability for a product over a specified date range.
  * Checks concurrent overlapping accepted/active bookings against the product's total inventory.
  * Pending, rejected, and returned requests DO NOT reserve stock.
+ *
+ * @param {object} [options]              Optional overrides.
+ * @param {object} [options.dbHandle]     Database handle to use (defaults to the module-level `db`).
+ *                                        Pass a handle that is already inside a transaction to
+ *                                        keep the availability check atomic with subsequent writes.
+ * @param {number} [options.excludeOrderId]  An order_id to exclude from the overlap query.
+ *                                           Useful when rechecking availability for an order that
+ *                                           is about to be accepted (so it doesn't count against itself).
  */
-function checkProductStockAvailability(productId, startDate, endDate, requestedQty = 1) {
+function checkProductStockAvailability(productId, startDate, endDate, requestedQty = 1, options = {}) {
+    const dbHandle = options.dbHandle || db;
+    const excludeOrderId = options.excludeOrderId || null;
+
     return new Promise((resolve, reject) => {
-        db.get(
+        dbHandle.get(
             'SELECT product_id, name, quantity, price, deposit, rentUnit FROM products WHERE product_id = ?',
             [productId],
             (err, product) => {
@@ -640,19 +707,30 @@ function checkProductStockAvailability(productId, startDate, endDate, requestedQ
                 const totalStock = Number(product.quantity) || 0;
                 const reqQty = Math.max(1, parseInt(requestedQty, 10) || 1);
 
-                // Fetch only active/accepted bookings that overlap [startDate, endDate]
-                // Note: Pending, Rejected, Returned, and Cancelled orders DO NOT reserve stock!
-                const query = `
+                // Fetch only accepted/approved/paid/active bookings that overlap [startDate, endDate].
+                // IMPORTANT: Pending, Rejected, Returned, and Cancelled orders DO NOT reserve stock!
+                let query = `
                     SELECT order_id, rent_start, rent_end, COALESCE(quantity, 1) AS quantity, status
                     FROM orders
                     WHERE product_id = ?
-                      AND LOWER(status) IN ('accepted', 'approved', 'paid', 'active')
+                      AND LOWER(TRIM(status)) IN (
+                          'accepted',
+                          'approved',
+                          'paid',
+                          'active'
+                      )
                       AND date(rent_start) <= date(?)
                       AND date(rent_end) >= date(?)
                       AND return_confirmed_at IS NULL
                 `;
+                const params = [productId, endDate, startDate];
 
-                db.all(query, [productId, endDate, startDate], (ordersErr, activeOrders) => {
+                if (excludeOrderId) {
+                    query += '\n                      AND order_id != ?';
+                    params.push(excludeOrderId);
+                }
+
+                dbHandle.all(query, params, (ordersErr, activeOrders) => {
                     if (ordersErr) return reject(ordersErr);
 
                     // Calculate peak concurrent booked units on any single day within [startDate, endDate]
@@ -706,38 +784,45 @@ app.get('/owner-dashboard', requireOwner, (req, res) => {
         SELECT
             COUNT(DISTINCT p.product_id) AS totalProducts,
             COALESCE(SUM(p.quantity), 0) AS totalStock,
+
             (
                 SELECT COALESCE(SUM(o.quantity), 0)
                 FROM orders o
                 JOIN products p2 ON p2.product_id = o.product_id
                 WHERE p2.owner_id = ?
-                  AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
-                  AND date('now') BETWEEN date(o.rent_start) AND date(o.rent_end)
+                  AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active')
+                  AND date(o.rent_start) <= date('now', 'localtime')
+                  AND date(o.rent_end) >= date('now', 'localtime')
                   AND o.return_confirmed_at IS NULL
             ) AS currentlyRentedUnits,
+
             (
                 SELECT COUNT(*)
                 FROM orders o
                 JOIN products p2 ON p2.product_id = o.product_id
                 WHERE p2.owner_id = ?
                   AND LOWER(o.status) = 'pending'
-            ) AS pendingRentalRequests,
+            ) AS             pendingRentalRequests,
+
             (
                 SELECT COUNT(*)
                 FROM orders o
                 JOIN products p2 ON p2.product_id = o.product_id
                 WHERE p2.owner_id = ?
-                  AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
-                  AND date(o.rent_end) BETWEEN date('now') AND date('now', '+7 days')
+                  AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active')
+                  AND date(o.rent_start) <= date('now', 'localtime')
+                  AND date(o.rent_end) BETWEEN date('now', 'localtime')
+                                           AND date('now', 'localtime', '+7 days')
                   AND o.return_confirmed_at IS NULL
             ) AS upcomingReturns,
+
             (
                 SELECT COUNT(*)
                 FROM orders o
                 JOIN products p2 ON p2.product_id = o.product_id
                 WHERE p2.owner_id = ?
-                  AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
-                  AND date(o.rent_end) < date('now')
+                  AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active')
+                  AND date(o.rent_end) < date('now', 'localtime')
                   AND o.return_confirmed_at IS NULL
             ) AS overdueRentals,
             (
@@ -785,13 +870,16 @@ app.get('/owner-dashboard', requireOwner, (req, res) => {
 });
 
 // ================= Owner Rental Requests & Bookings =================
-app.get('/owner/rental-requests', requireOwner, (req, res) => {
+app.get('/owner/rental-requests', requireOwner, requireOrdersSchema, (req, res) => {
     const ownerId = req.session.owner.owner_id;
     const filter = (req.query.status || 'all').toLowerCase();
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     let query = `
         SELECT o.order_id,
+               o.request_group_id,
+               o.payment_status,
                o.user_id,
                o.product_id,
                o.rent_start,
@@ -827,9 +915,9 @@ app.get('/owner/rental-requests', requireOwner, (req, res) => {
     } else if (filter === 'accepted') {
         query += " AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active') AND o.return_confirmed_at IS NULL";
     } else if (filter === 'upcoming') {
-        query += " AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active') AND date(o.rent_end) BETWEEN date('now') AND date('now', '+7 days') AND o.return_confirmed_at IS NULL";
+        query += " AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active') AND date(o.rent_start) <= date('now', 'localtime') AND date(o.rent_end) BETWEEN date('now', 'localtime') AND date('now', 'localtime', '+7 days') AND o.return_confirmed_at IS NULL";
     } else if (filter === 'overdue') {
-        query += " AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active') AND date(o.rent_end) < date('now') AND o.return_confirmed_at IS NULL";
+        query += " AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active') AND date(o.rent_end) < date('now', 'localtime') AND o.return_confirmed_at IS NULL";
     } else if (filter === 'returned') {
         query += " AND LOWER(o.status) = 'returned'";
     } else if (filter === 'rejected') {
@@ -859,7 +947,7 @@ app.get('/owner/rental-requests', requireOwner, (req, res) => {
 });
 
 // ================= Owner Accept or Reject Rental Request =================
-app.post('/owner/rental-requests/:order_id/action', requireOwner, async (req, res) => {
+app.post('/owner/rental-requests/:order_id/action', requireOwner, requireOrdersSchema, async (req, res) => {
     try {
         const orderId = Number(req.params.order_id);
         const { action, notes } = req.body;
@@ -892,62 +980,125 @@ app.post('/owner/rental-requests/:order_id/action', requireOwner, async (req, re
             }
 
             if (action === 'accept') {
-                if (order.status !== 'Pending') {
+                if ((order.status || '').toLowerCase() !== 'pending') {
                     return res.status(400).json({
                         success: false,
                         message: `Cannot accept request. Current status is already "${order.status}".`
                     });
                 }
 
-                // CRITICAL INVENTORY OVERLAP CHECK:
-                // Only reserve stock if available units during [rent_start, rent_end] >= requested quantity!
+                // CRITICAL CONCURRENCY-SAFE INVENTORY CHECK:
+                // Use BEGIN IMMEDIATE to acquire an exclusive write-lock on the database
+                // BEFORE checking availability. This prevents two concurrent accept
+                // operations from both passing the availability check before either commits.
                 const orderQty = Number(order.quantity) || 1;
-                const avail = await checkProductStockAvailability(
-                    order.product_id,
-                    order.rent_start,
-                    order.rent_end,
-                    orderQty
-                );
 
-                if (!avail.isAvailable) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `Cannot accept booking: inventory for ${order.rent_start} to ${order.rent_end} is insufficient. Available: ${avail.availableUnits} unit(s), Requested: ${orderQty} unit(s). Overlapping bookings prevent exceeding inventory.`
-                    });
-                }
-
-                // Accept request and reserve stock for the booking window
-                db.run(
-                    `UPDATE orders
-                     SET status = 'Accepted', supplier_notes = ?
-                     WHERE order_id = ?`,
-                    [notes || 'Accepted by supplier', orderId],
-                    function (updateErr) {
-                        if (updateErr) {
-                            return res.status(500).json({ success: false, message: 'Failed to accept rental request' });
-                        }
-
-                        res.json({
-                            success: true,
-                            message: `Rental request #${orderId} accepted successfully! ${orderQty} unit(s) reserved for ${order.rent_start} to ${order.rent_end}.`,
-                            status: 'Accepted'
+                db.run('BEGIN IMMEDIATE', async (beginErr) => {
+                    if (beginErr) {
+                        console.error('Transaction begin error:', beginErr.message);
+                        return res.status(503).json({
+                            success: false,
+                            message: 'Server is busy processing another booking. Please try again.'
                         });
                     }
-                );
+
+                    try {
+                        // Recheck availability INSIDE the transaction so the read + write
+                        // are atomic. Pass the db handle so queries run within the txn.
+                        const avail = await checkProductStockAvailability(
+                            order.product_id,
+                            order.rent_start,
+                            order.rent_end,
+                            orderQty,
+                            { dbHandle: db }
+                        );
+
+                        if (!avail.isAvailable) {
+                            return db.run('ROLLBACK', () => {
+                                res.status(400).json({
+                                    success: false,
+                                    message: `Cannot accept booking: inventory for ${order.rent_start} to ${order.rent_end} is insufficient. Available: ${avail.availableUnits} unit(s), Requested: ${orderQty} unit(s). Overlapping bookings prevent exceeding inventory.`
+                                });
+                            });
+                        }
+
+                        // Accept request and reserve stock for the booking window
+                        db.run(
+                            `UPDATE orders
+                             SET status = 'Accepted',
+                                 payment_status = 'Completed',
+                                 supplier_notes = ?
+                             WHERE order_id = ? AND LOWER(TRIM(status)) = 'pending'`,
+                            [notes || 'Accepted by supplier', orderId],
+                            function (updateErr) {
+                                if (updateErr) {
+                                    return db.run('ROLLBACK', () => {
+                                        res.status(500).json({ success: false, message: 'Failed to accept rental request' });
+                                    });
+                                }
+
+                                if (this.changes === 0) {
+                                    // Another request already changed this order's status
+                                    return db.run('ROLLBACK', () => {
+                                        res.status(409).json({
+                                            success: false,
+                                            message: 'This rental request was already processed by another action.'
+                                        });
+                                    });
+                                }
+
+                                db.run('COMMIT', (commitErr) => {
+                                    if (commitErr) {
+                                        console.error('Transaction commit error:', commitErr.message);
+                                        return db.run('ROLLBACK', () => {
+                                            res.status(500).json({ success: false, message: 'Failed to finalize booking' });
+                                        });
+                                    }
+
+                                    res.json({
+                                        success: true,
+                                        message: `Rental request #${orderId} approved. ${orderQty} unit(s) reserved for ${order.rent_start} to ${order.rent_end}; payment marked completed.`,
+                                        status: 'Accepted',
+                                        payment_status: 'Completed'
+                                    });
+                                });
+                            }
+                        );
+                    } catch (txnErr) {
+                        console.error('Accept transaction error:', txnErr.message);
+                        db.run('ROLLBACK', () => {
+                            if (!res.headersSent) {
+                                res.status(500).json({ success: false, message: 'Server error during booking' });
+                            }
+                        });
+                    }
+                });
             } else if (action === 'reject') {
-                if (order.status === 'Returned') {
-                    return res.status(400).json({ success: false, message: 'Cannot reject an already returned rental.' });
+                if ((order.status || '').toLowerCase() !== 'pending') {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Cannot reject request. Current status is already "${order.status}".`
+                    });
                 }
 
                 // Reject request: status becomes Rejected, reserves 0 stock
                 db.run(
                     `UPDATE orders
-                     SET status = 'Rejected', supplier_notes = ?
-                     WHERE order_id = ?`,
+                     SET status = 'Rejected',
+                         payment_status = 'Not Required',
+                         supplier_notes = ?
+                     WHERE order_id = ? AND LOWER(TRIM(status)) = 'pending'`,
                     [notes || 'Rejected by supplier', orderId],
                     function (updateErr) {
                         if (updateErr) {
                             return res.status(500).json({ success: false, message: 'Failed to reject rental request' });
+                        }
+
+                        if (this.changes === 0) {
+                            return res.status(409).json({
+                                success: false,
+                                message: 'This rental request was already processed by another action.'
+                            });
                         }
 
                         res.json({
@@ -1055,8 +1206,9 @@ app.get('/owner/inventory-status', requireOwner, (req, res) => {
                    SELECT COALESCE(SUM(o.quantity), 0)
                    FROM orders o
                    WHERE o.product_id = p.product_id
-                     AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
-                     AND date('now') BETWEEN date(o.rent_start) AND date(o.rent_end)
+                     AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active')
+                     AND date(o.rent_start) <= date('now', 'localtime')
+                     AND date(o.rent_end) >= date('now', 'localtime')
                      AND o.return_confirmed_at IS NULL
                ) AS currently_rented_units,
                (
@@ -1069,8 +1221,8 @@ app.get('/owner/inventory-status', requireOwner, (req, res) => {
                    SELECT COUNT(*)
                    FROM orders o
                    WHERE o.product_id = p.product_id
-                     AND LOWER(o.status) IN ('accepted', 'approved', 'paid', 'active')
-                     AND date(o.rent_end) < date('now')
+                     AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active')
+                     AND date(o.rent_end) < date('now', 'localtime')
                      AND o.return_confirmed_at IS NULL
                ) AS overdue_count
         FROM products p
@@ -1119,14 +1271,13 @@ app.post(
                 price,
                 description,
                 deposit,
-                rentUnit
+                quantity
             } = req.body;
             if (
                 !name ||
                 !category ||
                 price === undefined ||
-                price === '' ||
-                !rentUnit
+                price === ''
             ) {
                 return res.status(400).json({
                     message: 'Required fields missing'
@@ -1138,10 +1289,14 @@ app.post(
                 deposit === undefined || deposit === ''
                     ? 0
                     : Number(deposit);
+            const numericQuantity =
+                quantity !== undefined && quantity !== ''
+                    ? Math.max(1, parseInt(quantity, 10) || 1)
+                    : 1;
 
             if (
                 !Number.isFinite(numericPrice) ||
-                numericPrice < 0 ||
+                numericPrice <= 0 ||
                 !Number.isFinite(numericDeposit) ||
                 numericDeposit < 0
             ) {
@@ -1159,8 +1314,8 @@ app.post(
             const query = `
                 INSERT INTO products
                     (owner_id, name, category, price, description,
-                     image, invoice, deposit, rentUnit)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     image, invoice, deposit, rentUnit, quantity)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             db.run(
@@ -1174,7 +1329,8 @@ app.post(
                     imageFile,
                     invoiceFile,
                     numericDeposit,
-                    rentUnit
+                    'day',
+                    numericQuantity
                 ],
                 function (err) {
                     if (err) {
@@ -1347,20 +1503,60 @@ app.patch(
 
         const change = action === 'increase' ? quantity : -quantity;
 
-        // Update only this supplier's product.
-        // Stock cannot become negative.
-        db.run(
-            `UPDATE products
-             SET quantity = quantity + ?
-             WHERE product_id = ?
-               AND owner_id = ?
-               AND quantity + ? >= 0`,
-            [
-                change,
-                productId,
-                req.session.owner.owner_id,
-                change
-            ],
+        // If decreasing stock, verify that the new stock will not fall below currently rented units
+        if (action === 'decrease') {
+            db.get(
+                `SELECT p.quantity AS current_stock,
+                        COALESCE((
+                            SELECT SUM(o.quantity)
+                            FROM orders o
+                            WHERE o.product_id = p.product_id
+                              AND LOWER(TRIM(o.status)) IN ('accepted', 'approved', 'paid', 'active')
+                              AND date(o.rent_start) <= date('now', 'localtime')
+                              AND date(o.rent_end) >= date('now', 'localtime')
+                              AND o.return_confirmed_at IS NULL
+                        ), 0) AS rented_units
+                 FROM products p
+                 WHERE p.product_id = ? AND p.owner_id = ?`,
+                [productId, req.session.owner.owner_id],
+                (checkErr, checkRow) => {
+                    if (checkErr || !checkRow) {
+                        return res.status(500).json({ success: false, message: 'Could not verify current stock' });
+                    }
+
+                    const currentStock = Number(checkRow.current_stock) || 0;
+                    const rentedUnits = Number(checkRow.rented_units) || 0;
+                    const newStock = currentStock - quantity;
+
+                    if (newStock < rentedUnits) {
+                        return res.status(400).json({
+                            success: false,
+                            message: `Cannot reduce stock to ${newStock} unit(s). There are currently ${rentedUnits} unit(s) out on rent.`
+                        });
+                    }
+
+                    applyStockChange();
+                }
+            );
+        } else {
+            applyStockChange();
+        }
+
+        function applyStockChange() {
+            // Update only this supplier's product.
+            // Stock cannot become negative.
+            db.run(
+                `UPDATE products
+                 SET quantity = quantity + ?
+                 WHERE product_id = ?
+                   AND owner_id = ?
+                   AND quantity + ? >= 0`,
+                [
+                    change,
+                    productId,
+                    req.session.owner.owner_id,
+                    change
+                ],
             function (err) {
                 if (err) {
                     console.error('Stock update error:', err.message);
@@ -1401,6 +1597,7 @@ app.patch(
             }
         );
     }
+}
 );
 
 // ================= Update Product =================
@@ -1440,20 +1637,21 @@ app.put(
                 const name = req.body.name ?? product.name;
                 const category = req.body.category ?? product.category;
                 const description = req.body.description ?? product.description;
-                const rentUnit = req.body.rentUnit ?? product.rentUnit;
                 const price = req.body.price === undefined
                     ? Number(product.price)
                     : Number(req.body.price);
                 const deposit = req.body.deposit === undefined
                     ? Number(product.deposit || 0)
                     : Number(req.body.deposit);
+                const quantity = req.body.quantity !== undefined && req.body.quantity !== ''
+                    ? Math.max(0, parseInt(req.body.quantity, 10))
+                    : product.quantity;
 
                 if (
                     !name ||
                     !category ||
-                    !rentUnit ||
                     !Number.isFinite(price) ||
-                    price < 0 ||
+                    price <= 0 ||
                     !Number.isFinite(deposit) ||
                     deposit < 0
                 ) {
@@ -1468,7 +1666,7 @@ app.put(
                 db.run(
                     `UPDATE products
                      SET name = ?, category = ?, price = ?, description = ?,
-                         image = ?, invoice = ?, deposit = ?, rentUnit = ?
+                         image = ?, invoice = ?, deposit = ?, rentUnit = 'day', quantity = ?
                      WHERE product_id = ? AND owner_id = ?`,
                     [
                         name,
@@ -1478,7 +1676,7 @@ app.put(
                         image,
                         invoice,
                         deposit,
-                        rentUnit,
+                        quantity,
                         productId,
                         req.session.owner.owner_id
                     ],
@@ -1507,20 +1705,51 @@ app.delete(
     requireOwnedProduct,
     (req, res) => {
         const productId = req.params.product_id;
-        db.run(
-            'DELETE FROM products WHERE product_id = ? AND owner_id = ?',
-            [productId, req.session.owner.owner_id],
-            function (err) {
-                if (err) {
-                    console.error('Delete product error:', err.message);
-                    return res.status(500).json({
-                        message: 'Failed to delete product'
+
+        // Check if product has active or pending rentals before deleting
+        db.get(
+            `SELECT COUNT(*) AS activeCount
+             FROM orders
+             WHERE product_id = ?
+               AND LOWER(status) IN ('pending', 'accepted', 'approved', 'paid', 'active')
+               AND return_confirmed_at IS NULL`,
+            [productId],
+            (countErr, countRow) => {
+                if (countErr) {
+                    console.error('Error checking active rentals before delete:', countErr.message);
+                    return res.status(500).json({ message: 'Could not verify rental status' });
+                }
+
+                if (countRow && countRow.activeCount > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Cannot delete product while it has ${countRow.activeCount} active or pending rental request(s). Please complete or resolve active rentals first.`
                     });
                 }
 
-                res.status(200).json({
-                    message: 'Product deleted successfully'
-                });
+                db.run(
+                    'DELETE FROM products WHERE product_id = ? AND owner_id = ?',
+                    [productId, req.session.owner.owner_id],
+                    function (err) {
+                        if (err) {
+                            console.error('Delete product error:', err.message);
+                            return res.status(500).json({
+                                message: 'Failed to delete product'
+                            });
+                        }
+
+                        if (this.changes === 0) {
+                            return res.status(404).json({
+                                message: 'Product not found or already deleted'
+                            });
+                        }
+
+                        res.status(200).json({
+                            success: true,
+                            message: 'Product deleted successfully'
+                        });
+                    }
+                );
             }
         );
     }
@@ -1704,179 +1933,265 @@ app.put('/changePassword', async (req, res) => {
     );
 });
 
-// ================= Submit Rental Request (Customer) =================
-app.post('/rental-requests', requireUser, (req, res) => {
+// ================= Submit Multi-Product Rental Request (Customer) =================
+
+app.post('/rental-requests', requireUser, requireOrdersSchema, async (req, res) => {
+    const isValidDate = (value) => {
+        if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return false;
+        }
+
+        const [year, month, day] = value.split('-').map(Number);
+        const date = new Date(Date.UTC(year, month - 1, day));
+        return date.getUTCFullYear() === year &&
+            date.getUTCMonth() === month - 1 &&
+            date.getUTCDate() === day;
+    };
+    const run = (sql, params = []) => new Promise((resolve, reject) => {
+        db.run(sql, params, function (err) {
+            if (err) return reject(err);
+            resolve(this);
+        });
+    });
+    const get = (sql, params = []) => new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) return reject(err);
+            resolve(row);
+        });
+    });
+
+    const todayDate = new Date();
+    const today = [
+        todayDate.getFullYear(),
+        String(todayDate.getMonth() + 1).padStart(2, '0'),
+        String(todayDate.getDate()).padStart(2, '0')
+    ].join('-');
+    const inputItems = req.body.items;
+    const address = typeof req.body.address === 'string' && req.body.address.trim()
+        ? req.body.address.trim()
+        : (req.session.user.address || 'Standard Delivery Address');
+
+    if (!Array.isArray(inputItems) || inputItems.length === 0) {
+        return res.status(400).json({ success: false, message: 'Add at least one product to your cart.' });
+    }
+
+    const items = [];
+    for (const item of inputItems) {
+        const productId = Number(item?.product_id);
+        const quantity = Number(item?.quantity);
+        const rentStart = item?.startDate || item?.rent_start;
+        const rentEnd = item?.endDate || item?.rent_end;
+
+        if (!Number.isSafeInteger(productId) || productId < 1 ||
+            !Number.isSafeInteger(quantity) || quantity < 1) {
+            return res.status(400).json({
+                success: false,
+                message: 'Every cart item needs a valid product and positive whole-number quantity.'
+            });
+        }
+        if (!isValidDate(rentStart) || !isValidDate(rentEnd)) {
+            return res.status(400).json({
+                success: false,
+                message: `Product #${productId} needs a valid rental start date and end date.`
+            });
+        }
+        if (rentStart < today) {
+            return res.status(400).json({
+                success: false,
+                message: `Product #${productId} has a start date in the past. Choose today or a future date.`
+            });
+        }
+        if (rentStart > rentEnd) {
+            return res.status(400).json({
+                success: false,
+                message: `Product #${productId} must have an end date on or after its start date.`
+            });
+        }
+
+        items.push({ productId, quantity, rentStart, rentEnd });
+    }
+
+    let transactionStarted = false;
     try {
-        const {
-            product_id,
-            quantity = 1,
-            rent_start,
-            rent_end,
-            address,
-            customer_notes
-        } = req.body;
+        await run('BEGIN IMMEDIATE');
+        transactionStarted = true;
 
-        if (!product_id || !rent_start || !rent_end) {
-            return res.status(400).json({
-                success: false,
-                message: 'Product, start date, and end date are required'
-            });
+        const itemsByProduct = new Map();
+        for (const item of items) {
+            const productItems = itemsByProduct.get(item.productId) || [];
+            productItems.push(item);
+            itemsByProduct.set(item.productId, productItems);
         }
 
-        const qty = parseInt(quantity, 10);
-        if (!Number.isSafeInteger(qty) || qty < 1) {
-            return res.status(400).json({
-                success: false,
-                message: 'Quantity must be at least 1'
-            });
-        }
-
-        const today = new Date().toISOString().split('T')[0];
-        if (rent_start < today) {
-            return res.status(400).json({
-                success: false,
-                message: 'Rental start date cannot be in the past'
-            });
-        }
-
-        if (rent_start > rent_end) {
-            return res.status(400).json({
-                success: false,
-                message: 'Rental end date must be on or after start date'
-            });
-        }
-
-        // Fetch product to calculate total price and deposit
-        db.get('SELECT * FROM products WHERE product_id = ?', [product_id], (prodErr, product) => {
-            if (prodErr || !product) {
-                return res.status(404).json({ success: false, message: 'Product not found' });
+        const productsById = new Map();
+        for (const [productId, productItems] of itemsByProduct) {
+            const product = await get('SELECT * FROM products WHERE product_id = ?', [productId]);
+            if (!product) {
+                await run('ROLLBACK');
+                transactionStarted = false;
+                return res.status(404).json({
+                    success: false,
+                    message: `Product #${productId} was not found. No requests were submitted.`
+                });
             }
+            productsById.set(productId, product);
 
-            // Calculate duration in days
-            const sDate = new Date(rent_start);
-            const eDate = new Date(rent_end);
-            const diffTime = Math.abs(eDate - sDate);
-            const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1); // inclusive days
+            const firstDate = productItems.reduce(
+                (earliest, item) => item.rentStart < earliest ? item.rentStart : earliest,
+                productItems[0].rentStart
+            );
+            const lastDate = productItems.reduce(
+                (latest, item) => item.rentEnd > latest ? item.rentEnd : latest,
+                productItems[0].rentEnd
+            );
+            const day = new Date(`${firstDate}T00:00:00Z`);
+            const lastDay = new Date(`${lastDate}T00:00:00Z`);
 
-            const unitPrice = Number(product.price) || 0;
-            const depositPerUnit = Number(product.deposit) || 0;
-            const totalRent = unitPrice * diffDays * qty;
-            const totalDeposit = depositPerUnit * qty;
-            const totalAmount = totalRent + totalDeposit;
+            for (; day <= lastDay; day.setUTCDate(day.getUTCDate() + 1)) {
+                const date = day.toISOString().slice(0, 10);
+                const requestedQuantity = productItems.reduce((quantity, item) => (
+                    item.rentStart <= date && item.rentEnd >= date
+                        ? quantity + item.quantity
+                        : quantity
+                ), 0);
+                if (requestedQuantity === 0) continue;
 
-            // Submit rental request with status 'Pending'
-            // CRITICAL: Pending requests DO NOT reserve stock!
-            const query = `
-                INSERT INTO orders
-                    (user_id, product_id, rent_start, rent_end, total_amount, quantity, address, customer_notes, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
-            `;
-
-            db.run(
-                query,
-                [
-                    req.session.user.user_id,
-                    product_id,
-                    rent_start,
-                    rent_end,
-                    totalAmount,
-                    qty,
-                    address || (req.session.user.address || 'Standard Delivery Address'),
-                    customer_notes || ''
-                ],
-                function (insertErr) {
-                    if (insertErr) {
-                        console.error('Rental request error:', insertErr.message);
-                        return res.status(500).json({
-                            success: false,
-                            message: 'Failed to submit rental request'
-                        });
-                    }
-
-                    res.status(201).json({
-                        success: true,
-                        message: 'Rental request submitted successfully! Awaiting supplier confirmation.',
-                        order_id: this.lastID,
-                        details: {
-                            order_id: this.lastID,
-                            product_id,
-                            product_name: product.name,
-                            quantity: qty,
-                            rent_start,
-                            rent_end,
-                            diffDays,
-                            total_amount: totalAmount,
-                            status: 'Pending'
-                        }
+                const availability = await checkProductStockAvailability(
+                    productId,
+                    date,
+                    date,
+                    requestedQuantity,
+                    { dbHandle: db }
+                );
+                if (!availability.isAvailable) {
+                    await run('ROLLBACK');
+                    transactionStarted = false;
+                    return res.status(409).json({
+                        success: false,
+                        message: `"${product.name}" is unavailable for ${date}. Only ${availability.availableUnits} unit(s) are available; ${requestedQuantity} requested. No requests were submitted.`,
+                        product_id: productId,
+                        available_quantity: availability.availableUnits,
+                        requested_quantity: requestedQuantity
                     });
                 }
+            }
+        }
+
+        const preparedItems = [];
+        for (const item of items) {
+            const product = productsById.get(item.productId);
+            const diffDays = Math.round(
+                (new Date(`${item.rentEnd}T00:00:00Z`) - new Date(`${item.rentStart}T00:00:00Z`)) /
+                (1000 * 60 * 60 * 24)
+            ) + 1;
+            const totalAmount =
+                (Number(product.price) || 0) * diffDays * item.quantity +
+                (Number(product.deposit) || 0) * item.quantity;
+            preparedItems.push({ ...item, product, diffDays, totalAmount });
+        }
+
+        const requestGroupId = crypto.randomBytes(16).toString('hex');
+        const orderIds = [];
+        for (const item of preparedItems) {
+            const result = await run(
+                `INSERT INTO orders
+                    (user_id, product_id, rent_start, rent_end, total_amount, quantity,
+                     address, customer_notes, status, payment_status, request_group_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', 'Pending', ?)`,
+                [
+                    req.session.user.user_id,
+                    item.productId,
+                    item.rentStart,
+                    item.rentEnd,
+                    item.totalAmount,
+                    item.quantity,
+                    address,
+                    req.body.customer_notes || '',
+                    requestGroupId
+                ]
             );
+            orderIds.push(result.lastID);
+        }
+
+        await run('COMMIT');
+        transactionStarted = false;
+        return res.status(201).json({
+            success: true,
+            request_group_id: requestGroupId,
+            order_ids: orderIds,
+            message: `${orderIds.length} rental request(s) submitted together. Suppliers must approve each product before payment is marked complete.`,
+            total_amount: preparedItems.reduce((sum, item) => sum + item.totalAmount, 0)
         });
     } catch (err) {
-        console.error('Submit rental request exception:', err.message);
-        res.status(500).json({ success: false, message: 'Server error while processing request' });
+        if (transactionStarted) {
+            try {
+                await run('ROLLBACK');
+            } catch (rollbackErr) {
+                console.error('Rental request rollback error:', rollbackErr.message);
+            }
+        }
+        console.error('Submit rental request error:', err.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Could not submit the rental request. No partial requests were saved.'
+        });
     }
 });
 
-// ================= Place Order (Direct Checkout) =================
-app.post('/place-order', requireUser, (req, res) => {
-    const {
-        product_id,
-        rent_start,
-        rent_end,
-        total_amount,
-        quantity = 1,
-        address,
-        customer_notes
-    } = req.body;
 
-    if (
-        !product_id ||
-        !rent_start ||
-        !rent_end ||
-        total_amount === undefined ||
-        total_amount === null
-    ) {
-        return res.status(400).json({
-            message: 'Missing required fields'
-        });
-    }
+// ================= Cancel / Delete Pending Rental Request =================
+app.delete('/rental-requests/:order_id', requireUser, (req, res) => {
+    const orderId = req.params.order_id;
+    const userId = req.session.user.user_id;
 
-    const amount = Number(total_amount);
-
-    if (!Number.isFinite(amount) || amount < 0) {
-        return res.status(400).json({ message: 'Invalid total amount' });
-    }
-
-    const qty = Math.max(1, parseInt(quantity, 10) || 1);
-
-    const query = `
-        INSERT INTO orders
-            (user_id, product_id, rent_start, rent_end, total_amount, quantity, address, customer_notes, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
-    `;
-
-    db.run(
-        query,
-        [req.session.user.user_id, product_id, rent_start, rent_end, amount, qty, address || null, customer_notes || null],
-        function (err) {
+    // First verify the order exists, belongs to this user, and is still Pending
+    db.get(
+        'SELECT order_id, status FROM orders WHERE order_id = ? AND user_id = ?',
+        [orderId, userId],
+        (err, order) => {
             if (err) {
-                console.error('Place order error:', err.message);
-                return res.status(500).json({
-                    message: 'Failed to place order'
+                console.error('Cancel request lookup error:', err.message);
+                return res.status(500).json({ success: false, message: 'Server error' });
+            }
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found or does not belong to you'
                 });
             }
 
-            res.status(201).json({
-                message: 'Rental request placed successfully',
-                order_id: this.lastID
+            if (order.status.toLowerCase() !== 'pending') {
+                return res.status(400).json({
+                    success: false,
+                    message: `Cannot cancel — this request has already been ${order.status}. Only pending requests can be cancelled.`
+                });
+            }
+
+            // Delete the pending order
+            db.run('DELETE FROM orders WHERE order_id = ? AND user_id = ?', [orderId, userId], function (delErr) {
+                if (delErr) {
+                    console.error('Cancel request delete error:', delErr.message);
+                    return res.status(500).json({ success: false, message: 'Failed to cancel request' });
+                }
+
+                if (this.changes === 0) {
+                    return res.status(404).json({ success: false, message: 'Order could not be deleted' });
+                }
+
+                res.json({
+                    success: true,
+                    message: 'Rental request cancelled successfully',
+                    order_id: orderId
+                });
             });
         }
     );
 });
 
+// ================= Place Order (Direct Checkout) =================
 // ================= Get User Orders / Rental Requests =================
-app.get('/orders/:user_id', requireUser, (req, res) => {
+app.get('/orders/:user_id', requireUser, requireOrdersSchema, (req, res) => {
     if (String(req.session.user.user_id) !== String(req.params.user_id)) {
         return res.status(403).json({
             success: false,
@@ -1927,148 +2242,6 @@ app.get('/orders/:user_id', requireUser, (req, res) => {
     });
 });
 
-
-// ================= Create Razorpay Order =================
-app.post('/create-order', requireUser, async (req, res) => {
-    try {
-        const amount = Math.round(Number(req.body.amount));
-
-        // Amount must be supplied in paise.
-        if (!Number.isSafeInteger(amount) || amount < 100) {
-            return res.status(400).json({
-                error: 'Invalid amount. Amount must be at least 100 paise.'
-            });
-        }
-
-        const options = {
-            amount,
-            currency: 'INR',
-            receipt: 'order_rcpt_' + Date.now()
-        };
-
-        const order = await razorpay.orders.create(options);
-        res.json(order);
-    } catch (err) {
-        console.error('Razorpay order creation error:', err.message);
-        res.status(500).json({ error: 'Order creation failed' });
-    }
-});
-
-// ================= Save Paid Order =================
-// IMPORTANT: This route still requires Razorpay signature verification
-// before it can safely trust a payment as paid.
-app.post('/save-order', requireUser, (req, res) => {
-    const {
-        items,
-        address,
-        total_amount,
-        payment_id
-    } = req.body;
-
-    if (
-        !Array.isArray(items) ||
-        items.length === 0 ||
-        !address ||
-        total_amount === undefined ||
-        !payment_id
-    ) {
-        return res.status(400).json({
-            success: false,
-            message: 'Missing required order or payment details'
-        });
-    }
-
-    const amount = Number(total_amount);
-
-    if (!Number.isFinite(amount) || amount < 0) {
-        return res.status(400).json({
-            success: false,
-            message: 'Invalid total amount'
-        });
-    }
-
-    const status = 'Paid';
-    const startDateFallback = new Date().toISOString().split('T')[0];
-
-    db.serialize(() => {
-        db.run('BEGIN TRANSACTION');
-
-        const stmt = db.prepare(`
-            INSERT INTO orders
-                (user_id, product_id, rent_start, rent_end,
-                 total_amount, payment_id, address, status, quantity)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        let failed = false;
-        let remaining = items.length;
-
-        const rollback = (err) => {
-            if (failed) return;
-            failed = true;
-
-            console.error('Save order error:', err.message);
-
-            stmt.finalize(() => {
-                db.run('ROLLBACK', () => {
-                    if (!res.headersSent) {
-                        res.status(500).json({
-                            success: false,
-                            message: 'Failed to save order'
-                        });
-                    }
-                });
-            });
-        };
-
-        items.forEach((item) => {
-            if (
-                !item ||
-                !item.product_id
-            ) {
-                return rollback(new Error('Invalid product in order'));
-            }
-
-            const itemQty = Math.max(1, parseInt(item.quantity, 10) || 1);
-
-            stmt.run(
-                [
-                    req.session.user.user_id,
-                    item.product_id,
-                    item.startDate || startDateFallback,
-                    item.endDate || startDateFallback,
-                    amount,
-                    payment_id,
-                    address,
-                    status,
-                    itemQty
-                ],
-                (err) => {
-
-                    if (err) return rollback(err);
-                    if (failed) return;
-
-                    remaining -= 1;
-
-                    if (remaining === 0) {
-                        stmt.finalize((finalizeErr) => {
-                            if (finalizeErr) return rollback(finalizeErr);
-
-                            db.run('COMMIT', (commitErr) => {
-                                if (commitErr) return rollback(commitErr);
-
-                                res.json({
-                                    success: true,
-                                    message: 'Order saved successfully'
-                                });
-                            });
-                        });
-                    }
-                }
-            );
-        });
-    });
-});
 
 // ================= Admin Login =================
 app.post('/admin/login', (req, res) => {
@@ -2414,6 +2587,15 @@ ${JSON.stringify(products)}
 });
 
 // ================= Start Server =================
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`\n❌ Port ${PORT} is already in use by another running instance.`);
+        console.error(`The server is already running! If you wish to restart it, stop the existing process first (e.g., stop the running terminal or kill PID).\n`);
+    } else {
+        console.error('Server error:', err);
+    }
 });

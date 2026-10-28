@@ -1,32 +1,41 @@
 /* ==========================================================================
-   RentIT Supplier Portal - Unified Modern Stylesheet
-   Design System: Navy Blue Primary with Teal Accents & Light Neutral Canvas
+   RentIT Supplier Portal - Unified Stylesheet (Home Page Matching Theme)
+   Design System: Charcoal Neutral (#222) with Signature Orange Accents (#ff6600)
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #0f172a;        /* Deep Slate / Navy */
-  --primary-light: #1e293b;  /* Navy surface */
-  --primary-accent: #1e40af; /* Royal Navy accent */
+  --primary: #222222;        /* Dark Neutral from RentIT Homepage */
+  --primary-light: #333333;  /* Charcoal surface */
+  --primary-accent: #ff6600; /* RentIT Signature Orange */
 
-  --teal-50: #f0fdfa;
-  --teal-100: #ccfbf1;
-  --teal-200: #99f6e4;
-  --teal-600: #0d9488;
-  --teal-700: #0f766e;
-  --teal-800: #115e59;
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-500: #ff6600;
+  --orange-600: #e65c00;
+  --orange-700: #c2410c;
+  --orange-800: #9a3412;
 
-  --bg-canvas: #f8fafc;
+  /* Aliasing teal tokens to RentIT signature orange palette for unified harmony */
+  --teal-50: #fff7ed;
+  --teal-100: #ffedd5;
+  --teal-200: #fed7aa;
+  --teal-600: #ff6600;
+  --teal-700: #ff6600;
+  --teal-800: #e65c00;
+
+  --bg-canvas: #f8f9fa;      /* Clean off-white matching index.html */
   --bg-card: #ffffff;
-  --bg-subtle: #f1f5f9;
+  --bg-subtle: #f1f3f5;
 
-  --border-light: #e2e8f0;
-  --border-subtle: #cbd5e1;
+  --border-light: #e5e7eb;
+  --border-subtle: #d1d5db;
 
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-light: #94a3b8;
+  --text-main: #222222;
+  --text-muted: #555555;
+  --text-light: #888888;
   --text-inverse: #ffffff;
 
   --success-bg: #ecfdf5;
@@ -46,10 +55,10 @@
   --radius-lg: 14px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --shadow-hover: 0 12px 20px -3px rgba(15, 23, 42, 0.12), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 12px 20px -3px rgba(0, 0, 0, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
 
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
@@ -62,7 +71,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Segoe UI', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-canvas);
   color: var(--text-main);
   line-height: 1.5;
@@ -103,20 +112,20 @@ body {
 .sup-brand-logo {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--teal-700) 100%);
+  background: linear-gradient(135deg, #ff6600 0%, #e65c00 100%);
   color: #fff;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.3);
 }
 
 .sup-brand-text {
   font-size: 1.25rem;
   font-weight: 800;
-  color: var(--primary);
+  color: #222222;
   letter-spacing: -0.02em;
 }
 
@@ -124,9 +133,9 @@ body {
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  background: var(--teal-50);
-  color: var(--teal-700);
-  border: 1px solid var(--teal-200);
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
   padding: 2px 8px;
   border-radius: var(--radius-full);
   letter-spacing: 0.04em;
@@ -157,8 +166,8 @@ body {
 }
 
 .sup-nav-link.active {
-  color: var(--teal-700);
-  background: var(--teal-50);
+  color: #ff6600;
+  background: #fff7ed;
   font-weight: 700;
 }
 
@@ -186,7 +195,7 @@ body {
   width: 30px;
   height: 30px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--teal-700) 100%);
+  background: linear-gradient(135deg, #ff6600 0%, #e65c00 100%);
   color: #fff;
   font-weight: 700;
   font-size: 0.8rem;
@@ -209,7 +218,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: none;
+  background: #ffffff;
   border: 1px solid var(--border-light);
   padding: 7px 12px;
   border-radius: var(--radius-sm);
@@ -269,7 +278,7 @@ body {
   right: 0;
   width: 240px;
   height: 100%;
-  background: radial-gradient(circle at top right, rgba(13, 148, 136, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle at top right, rgba(255, 102, 0, 0.08) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -436,23 +445,23 @@ body {
 }
 
 .sup-btn-primary {
-  background: var(--primary);
+  background: #ff6600;
   color: #ffffff;
 }
 
 .sup-btn-primary:hover {
-  background: var(--primary-light);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+  background: #e65c00;
+  box-shadow: 0 4px 12px rgba(255, 102, 0, 0.25);
 }
 
 .sup-btn-teal {
-  background: var(--teal-700);
+  background: #ff6600;
   color: #ffffff;
 }
 
 .sup-btn-teal:hover {
-  background: var(--teal-800);
-  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);
+  background: #e65c00;
+  box-shadow: 0 4px 12px rgba(255, 102, 0, 0.25);
 }
 
 .sup-btn-secondary {
@@ -472,8 +481,9 @@ body {
 }
 
 .sup-btn-outline:hover {
-  background: var(--bg-subtle);
-  border-color: var(--primary);
+  background: #fff7ed;
+  border-color: #ff6600;
+  color: #ff6600;
 }
 
 .sup-btn-danger-outline {
@@ -710,7 +720,7 @@ body {
 .sup-prod-price {
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--primary);
+  color: #ff6600;
 }
 
 .sup-prod-unit {
@@ -1112,11 +1122,11 @@ body {
 
 /* ================= Footer ================= */
 .sup-footer {
-  background: #ffffff;
-  border-top: 1px solid var(--border-light);
+  background: #222222;
+  border-top: 1px solid #333333;
   padding: 24px;
   text-align: center;
-  color: var(--text-muted);
+  color: #cccccc;
   font-size: 0.85rem;
   margin-top: auto;
 }

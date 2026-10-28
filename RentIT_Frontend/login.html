@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - RentIT</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; overflow-x: hidden; }
     a { text-decoration: none; }
@@ -32,15 +33,19 @@
     footer { background: #222; color: white; text-align: center; padding: 15px; }
     @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
   </style>
+<link rel="stylesheet" href="site-shell.css">
 </head>
 <body>
 
   <header>
-    <h1>RentIT</h1>
+    <a class="site-brand" href="index.html" aria-label="RentIT home">
+      <span class="site-brand-mark"><i class="fa-solid fa-cube" aria-hidden="true"></i></span>
+      <span>RentIT</span>
+    </a>
     <nav>
       <a href="index.html">Home</a>
       <a href="login.html">Login</a>
-      <a href="#">Contact</a>
+      
     </nav>
   </header>
 
@@ -69,7 +74,7 @@
   </main>
 
   <footer>
-    <p>© 2025 RentIT. All rights reserved.</p>
+    <p class="site-footer-copy">© 2025 RentIT. All rights reserved.</p>
   </footer>
 
   <script>

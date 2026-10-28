@@ -1,0 +1,123 @@
+header {
+  padding: 10px 20px !important;
+  background-color: #111827 !important;
+  color: #fff;
+}
+
+.site-brand,
+.store-brand,
+.header-brand,
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff !important;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-brand-mark,
+.brand-mark,
+.sup-brand-logo,
+.admin-brand-icon {
+  display: inline-flex;
+  width: 52px !important;
+  height: 52px !important;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px !important;
+  background: #ff6600 !important;
+  color: #fff !important;
+  font-size: 1.5rem !important;
+  box-shadow: 0 4px 10px rgba(255, 102, 0, 0.25) !important;
+}
+
+.site-brand-mark i,
+.brand-mark i,
+.sup-brand-logo i,
+.admin-brand-icon i {
+  color: #fff !important;
+}
+
+.sup-brand,
+.admin-brand {
+  color: #fff !important;
+}
+
+.sup-brand-text,
+.admin-brand-title {
+  color: #fff !important;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
+  letter-spacing: normal !important;
+}
+
+.sup-header,
+.admin-header {
+  padding: 0 !important;
+  background-color: #111827 !important;
+}
+
+.sup-header-inner,
+.admin-header-inner {
+  width: 100%;
+  max-width: none !important;
+  padding: 10px 20px !important;
+}
+
+footer,
+.sup-footer,
+.admin-footer,
+.login-footer {
+  padding: 20px !important;
+  background-color: #111827 !important;
+  color: #fff !important;
+  text-align: center;
+}
+
+.site-footer-copy {
+  margin: 0;
+  color: #fff !important;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .site-footer-copy {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .site-brand,
+  .store-brand,
+  .header-brand,
+  .brand {
+    gap: 8px;
+    font-size: 1.4rem !important;
+  }
+
+  .sup-brand-text,
+  .admin-brand-title {
+    font-size: 1.4rem !important;
+  }
+
+  .site-brand-mark,
+  .brand-mark,
+  .sup-brand-logo,
+  .admin-brand-icon {
+    width: 42px !important;
+    height: 42px !important;
+    flex-basis: 42px;
+    border-radius: 11px !important;
+    font-size: 1.2rem !important;
+  }
+}
