@@ -547,8 +547,6 @@ app.post(
 );
 
 // ================= Owner Login =================
-
- // ================= Owner Login =================
 app.post('/owner-login', (req, res) => {
     const { email, password } = req.body;
 
@@ -706,9 +704,6 @@ function checkProductStockAvailability(productId, startDate, endDate, requestedQ
 
                 const totalStock = Number(product.quantity) || 0;
                 const reqQty = Math.max(1, parseInt(requestedQty, 10) || 1);
-
-                // Fetch only accepted/approved/paid/active bookings that overlap [startDate, endDate].
-                // IMPORTANT: Pending, Rejected, Returned, and Cancelled orders DO NOT reserve stock!
                 let query = `
                     SELECT order_id, rent_start, rent_end, COALESCE(quantity, 1) AS quantity, status
                     FROM orders
@@ -988,8 +983,6 @@ app.post('/owner/rental-requests/:order_id/action', requireOwner, requireOrdersS
                 }
 
                 // CRITICAL CONCURRENCY-SAFE INVENTORY CHECK:
-                // Use BEGIN IMMEDIATE to acquire an exclusive write-lock on the database
-                // BEFORE checking availability. This prevents two concurrent accept
                 // operations from both passing the availability check before either commits.
                 const orderQty = Number(order.quantity) || 1;
 
