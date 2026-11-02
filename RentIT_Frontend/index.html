@@ -330,12 +330,6 @@
       border-radius: 5px;
       border: none;
       font-size: 1rem;
-      outline: none;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-      transition: box-shadow 0.2s ease;
-    }
-    .hero-search-input:focus {
-      box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.2);
     }
     .hero-search-container {
       display: inline-block;
@@ -356,9 +350,6 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
       text-align: left;
       z-index: 4;
-      box-sizing: border-box;
-      min-width: 300px;
-      border: 1px solid #e5e7eb;
     }
     .hero-search-suggestions[hidden] {
       display: none;
@@ -386,36 +377,6 @@
     .hero-search-suggestion-details {
       color: #6b7280;
       font-size: 0.875rem;
-    }
-    .hero-search-suggestions-heading {
-      padding: 8px 15px 6px;
-      color: #6b7280;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .hero-search-suggestion-popular {
-      flex-direction: row;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 15px;
-    }
-    .hero-search-suggestion-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .hero-search-suggestion-icon {
-      display: inline-flex;
-      width: 32px;
-      height: 32px;
-      flex: 0 0 32px;
-      align-items: center;
-      justify-content: center;
-      border-radius: 9px;
-      background: #fff7ed;
-      color: #ea580c;
     }
     .hero-search-suggestions-empty {
       padding: 10px 15px;
@@ -931,68 +892,6 @@ window.addEventListener('load', async function() {
     showSearchSuggestions();
   }
 
-  function renderPopularSearches() {
-    const popularSearches = [
-      { term: 'Laptops', icon: 'fa-laptop', details: 'Work, study and everyday tech' },
-      { term: 'Cameras', icon: 'fa-camera', details: 'Cameras and photography gear' },
-      { term: 'Electronics', icon: 'fa-plug', details: 'Browse electronics for rent' },
-      { term: 'Accessories', icon: 'fa-headphones', details: 'Complete your setup' }
-    ];
-
-    suggestionsList.replaceChildren();
-    selectedSuggestion = -1;
-
-    const heading = document.createElement('div');
-    heading.className = 'hero-search-suggestions-heading';
-    heading.textContent = 'Popular searches';
-    suggestionsList.append(heading);
-
-    popularSearches.forEach(({ term, icon, details }) => {
-      const suggestion = document.createElement('a');
-      suggestion.className = 'hero-search-suggestion hero-search-suggestion-popular';
-      suggestion.href = `search_results.html?q=${encodeURIComponent(term)}`;
-      suggestion.id = `heroSearchSuggestion-${term.toLowerCase()}`;
-      suggestion.setAttribute('role', 'option');
-      suggestion.setAttribute('aria-selected', 'false');
-      suggestion.tabIndex = -1;
-
-      const iconElement = document.createElement('span');
-      iconElement.className = 'hero-search-suggestion-icon';
-      iconElement.setAttribute('aria-hidden', 'true');
-      const iconGlyph = document.createElement('i');
-      iconGlyph.className = `fa-solid ${icon}`;
-      iconElement.append(iconGlyph);
-
-      const text = document.createElement('span');
-      text.className = 'hero-search-suggestion-content';
-
-      const name = document.createElement('span');
-      name.className = 'hero-search-suggestion-name';
-      name.textContent = term;
-
-      const description = document.createElement('span');
-      description.className = 'hero-search-suggestion-details';
-      description.textContent = details;
-      text.append(name, description);
-      suggestion.append(iconElement, text);
-      suggestionsList.append(suggestion);
-    });
-
-    showSearchSuggestions();
-  }
-
-  searchInput.addEventListener('focus', () => {
-    if (!searchInput.value.trim()) {
-      renderPopularSearches();
-    }
-  });
-
-  searchInput.addEventListener('click', () => {
-    if (!searchInput.value.trim() && suggestionsList.hidden) {
-      renderPopularSearches();
-    }
-  });
-
   searchInput.addEventListener('input', () => {
     clearTimeout(searchDebounce);
     if (activeSearchController) {
@@ -1002,7 +901,7 @@ window.addEventListener('load', async function() {
 
     const searchTerm = searchInput.value.trim();
     if (!searchTerm) {
-      renderPopularSearches();
+      hideSearchSuggestions();
       return;
     }
 
